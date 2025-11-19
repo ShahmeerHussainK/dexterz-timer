@@ -59,13 +59,21 @@ export class ActivityMonitor {
       this.uploadInterval = null
     }
 
-    // Upload remaining samples
-    await this.uploadSamples()
+    try {
+      // Upload remaining samples
+      await this.uploadSamples()
 
-    // End session
-    if (this.sessionId) {
-      await this.apiClient.stopSession(this.sessionId)
+      // End session
+      if (this.sessionId) {
+        await this.apiClient.stopSession(this.sessionId)
+      }
+    } catch (error) {
+      console.error('Error during stop cleanup:', error)
+    } finally {
+      // Always clear session state
       this.sessionId = null
+      this.samples = []
+      this.lastSync = null
     }
 
     console.log('Activity tracking stopped')
@@ -97,17 +105,19 @@ export class ActivityMonitor {
   private async uploadSamples() {
     if (this.samples.length === 0) return
 
-    try {
-      const samplesToUpload = [...this.samples]
-      this.samples = []
+    const samplesToUpload = [...this.samples]
+    this.samples = []
 
+    try {
       await this.apiClient.uploadActivity(samplesToUpload)
       this.lastSync = new Date()
       console.log(`Uploaded ${samplesToUpload.length} samples`)
     } catch (error) {
       console.error('Failed to upload samples:', error)
-      // Re-add samples for retry
-      this.samples.unshift(...this.samples)
+      // Re-add samples for retry only if still tracking
+      if (this.tracking) {
+        this.samples.unshift(...samplesToUpload)
+      }
     }
   }
 

@@ -21,10 +21,12 @@ function App() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [lastSync, setLastSync] = useState<Date | null>(null)
+  const [statusInterval, setStatusInterval] = useState<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     checkAuth()
     const interval = setInterval(updateStatus, 5000)
+    setStatusInterval(interval)
     return () => clearInterval(interval)
   }, [])
 
@@ -37,11 +39,20 @@ function App() {
   }
 
   const updateStatus = async () => {
-    const status = await window.electronAPI.getStatus()
-    setIsTracking(status.isTracking)
-    setIsAuthenticated(status.isAuthenticated)
-    if (status.lastSync) {
-      setLastSync(new Date(status.lastSync))
+    // Don't update status if already logged out
+    if (!isAuthenticated) return
+    
+    try {
+      const status = await window.electronAPI.getStatus()
+      setIsTracking(status.isTracking)
+      setIsAuthenticated(status.isAuthenticated)
+      if (status.lastSync) {
+        setLastSync(new Date(status.lastSync))
+      } else {
+        setLastSync(null)
+      }
+    } catch (err) {
+      console.error('Status update failed:', err)
     }
   }
 
@@ -67,9 +78,27 @@ function App() {
   }
 
   const handleLogout = async () => {
-    await window.electronAPI.logout()
+    setLoading(true)
+    
+    // Stop status updates immediately
+    if (statusInterval) {
+      clearInterval(statusInterval)
+      setStatusInterval(null)
+    }
+    
+    // Force immediate logout state
     setIsAuthenticated(false)
     setIsTracking(false)
+    setLastSync(null)
+    setError('')
+    
+    try {
+      await window.electronAPI.logout()
+    } catch (err: any) {
+      console.error('Logout error:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleStartTracking = async () => {
@@ -166,8 +195,9 @@ function App() {
           onClick={handleLogout}
           className="button button-secondary"
           style={{ marginTop: '12px' }}
+          disabled={loading}
         >
-          Logout
+          {loading ? 'Logging out...' : 'Logout'}
         </button>
       </div>
 

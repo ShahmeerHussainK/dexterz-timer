@@ -4,9 +4,17 @@ const API_URL = process.env.API_URL || 'http://localhost:3001/api'
 
 export class ApiClient {
   private token: string | null = null
+  
+  get tokenValue(): string | null {
+    return this.token
+  }
 
   setToken(token: string) {
     this.token = token
+  }
+
+  clearToken() {
+    this.token = null
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -49,8 +57,14 @@ export class ApiClient {
   }
 
   async logout() {
-    await this.request('/auth/logout', { method: 'POST' })
-    this.token = null
+    try {
+      await this.request('/auth/logout', { method: 'POST' })
+    } catch (error) {
+      console.error('Logout API call failed:', error)
+      // Continue with token clearing even if API call fails
+    } finally {
+      this.token = null
+    }
   }
 
   async startSession(data: { deviceId: string; platform: string }) {

@@ -84,6 +84,13 @@ app.whenReady().then(() => {
   createTray()
 
   apiClient = new ApiClient()
+  
+  // Check for stored auth and restore session
+  const storedAuth = store.get('auth') as any
+  if (storedAuth?.accessToken) {
+    apiClient.setToken(storedAuth.accessToken)
+  }
+  
   activityMonitor = new ActivityMonitor(apiClient)
 
   // Auto-launch on startup
@@ -107,9 +114,14 @@ app.on('activate', () => {
 // IPC Handlers
 ipcMain.handle('login', async (_, { email, password }) => {
   try {
+    // Ensure clean state before login
+    await activityMonitor?.stop()
+    
     const result = await apiClient?.login(email, password)
     if (result) {
       store.set('auth', result)
+      // Reinitialize activity monitor with authenticated client
+      activityMonitor = new ActivityMonitor(apiClient!)
       return { success: true, data: result }
     }
     return { success: false, error: 'Login failed' }
@@ -120,12 +132,33 @@ ipcMain.handle('login', async (_, { email, password }) => {
 
 ipcMain.handle('logout', async () => {
   try {
-    await apiClient?.logout()
+    // Stop tracking first
+    await activityMonitor?.stop()
+    
+    // Logout from API (if possible)
+    try {
+      await apiClient?.logout()
+    } catch (apiError) {
+      console.error('API logout failed:', apiError)
+    }
+    
+    // Always clear local state regardless of API response
     store.delete('auth')
-    activityMonitor?.stop()
+    
+    // Reset API client
+    apiClient = new ApiClient()
+    
+    // Reset activity monitor
+    activityMonitor = new ActivityMonitor(apiClient)
+    
     return { success: true }
   } catch (error: any) {
-    return { success: false, error: error.message }
+    console.error('Logout error:', error)
+    // Force clear even on error
+    store.delete('auth')
+    apiClient = new ApiClient()
+    activityMonitor = new ActivityMonitor(apiClient)
+    return { success: true }
   }
 })
 
@@ -148,10 +181,13 @@ ipcMain.handle('stop-tracking', async () => {
 })
 
 ipcMain.handle('get-status', async () => {
+  const auth = store.get('auth')
+  const isAuth = !!auth && !!apiClient?.tokenValue
+  
   return {
-    isTracking: activityMonitor?.isTracking() || false,
-    lastSync: activityMonitor?.getLastSync(),
-    isAuthenticated: !!store.get('auth'),
+    isTracking: isAuth ? (activityMonitor?.isTracking() || false) : false,
+    lastSync: isAuth ? activityMonitor?.getLastSync() : null,
+    isAuthenticated: isAuth,
   }
 })
 
