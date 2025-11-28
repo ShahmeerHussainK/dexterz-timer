@@ -15,7 +15,8 @@
   "dependencies": {
     "@time-tracker/shared": "*",
     "electron-store": "^8.1.0",
-    "electron-updater": "^6.1.7"
+    "electron-updater": "^6.1.7",
+    "uiohook-napi": "^1.5.3"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

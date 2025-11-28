@@ -15,6 +15,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 400,
     height: 600,
+    title: 'Dexterz Time Tracker',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -24,6 +25,9 @@ function createWindow() {
     frame: true,
     resizable: false,
   })
+
+  // Remove menu bar completely
+  Menu.setApplicationMenu(null)
 
   // Always try to load from Vite dev server in development
   const isDev = !app.isPackaged
@@ -184,15 +188,35 @@ ipcMain.handle('get-status', async () => {
   const auth = store.get('auth')
   const isAuth = !!auth && !!apiClient?.tokenValue
   
+  const timerStats = isAuth && activityMonitor ? activityMonitor.getTimerStats() : null
+  
   return {
     isTracking: isAuth ? (activityMonitor?.isTracking() || false) : false,
     lastSync: isAuth ? activityMonitor?.getLastSync() : null,
     isAuthenticated: isAuth,
+    timerStats,
   }
 })
 
 ipcMain.handle('get-auth', async () => {
   return store.get('auth')
+})
+
+ipcMain.handle('get-organization', async () => {
+  try {
+    return await apiClient?.getOrganization()
+  } catch (error: any) {
+    return { error: error.message }
+  }
+})
+
+ipcMain.handle('get-schedule', async () => {
+  try {
+    const schedule = await apiClient?.getSchedule()
+    return schedule
+  } catch (error: any) {
+    return { error: error.message }
+  }
 })
 
 // Update tray status periodically

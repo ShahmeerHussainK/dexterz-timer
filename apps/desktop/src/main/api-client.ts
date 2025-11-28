@@ -87,4 +87,19 @@ export class ApiClient {
       body: JSON.stringify({ samples }),
     })
   }
+
+  async getOrganization() {
+    return this.request<{ id: string; name: string; timezone: string }>('/organizations/me')
+  }
+
+  async getSchedule() {
+    return this.request<{
+      tz: string
+      checkinStart: string
+      checkinEnd: string
+      breakStart: string
+      breakEnd: string
+      idleThresholdSeconds: number
+    }>('/organizations/schedule')
+  }
 }

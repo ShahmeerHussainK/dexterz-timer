@@ -24,10 +24,31 @@ body {
   padding: 24px;
   max-width: 420px;
   margin: 0 auto;
-  min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
+  padding-top: 40px;
+}
+
+/* Custom scrollbar */
+.container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.container::-webkit-scrollbar-thumb {
+  background: rgba(20, 184, 166, 0.5);
+  border-radius: 10px;
+}
+
+.container::-webkit-scrollbar-thumb:hover {
+  background: rgba(20, 184, 166, 0.7);
 }
 
 .card {
@@ -125,8 +146,14 @@ body {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.7; 
+    transform: scale(1.1);
+  }
 }
 
 .status-dot.inactive {
@@ -229,4 +256,65 @@ p {
 .sync-time {
   color: #475569;
   font-weight: 600;
+}
+
+.timer-stats {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.05) 0%, rgba(15, 118, 110, 0.05) 100%);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(20, 184, 166, 0.15);
+}
+
+.timer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.timer-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+}
+
+.timer-value {
+  font-size: 16px;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.5px;
+}
+
+.timer-value.active {
+  color: #10b981;
+}
+
+.timer-value.idle {
+  color: #f59e0b;
+}
+
+.timer-value.break {
+  color: #8b5cf6;
+}
+
+.timer-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(20, 184, 166, 0.3) 50%, transparent 100%);
+  margin: 12px 0;
+}
+
+.timer-row.total {
+  padding-top: 12px;
+}
+
+.timer-row.total .timer-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f766e;
+}
+
+.timer-row.total .timer-value {
+  font-size: 18px;
+  color: #14b8a6;
 }

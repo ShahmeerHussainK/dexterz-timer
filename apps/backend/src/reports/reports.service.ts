@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, differenceInMinutes } from 'date-fns';
+import { zonedTimeToUtc } from 'date-fns-tz';
 
 @Injectable()
 export class ReportsService {
@@ -42,8 +43,15 @@ export class ReportsService {
   }
 
   async getDailyReport(orgId: string, date: Date) {
-    const from = startOfDay(date);
-    const to = endOfDay(date);
+    // Parse date as local date (YYYY-MM-DD) to avoid timezone issues
+    const dateStr = date.toISOString().split('T')[0];
+    const from = new Date(dateStr + 'T00:00:00.000Z');
+    const to = new Date(dateStr + 'T23:59:59.999Z');
+    
+    console.log('📅 Daily Report Query:');
+    console.log('  Date String:', dateStr);
+    console.log('  From:', from.toISOString());
+    console.log('  To:', to.toISOString());
 
     const users = await this.prisma.user.findMany({
       where: { orgId, isActive: true },
@@ -64,6 +72,12 @@ export class ReportsService {
         },
         orderBy: { startedAt: 'asc' },
       });
+      
+      if (entries.length > 0) {
+        console.log(`  User ${user.fullName}: ${entries.length} entries`);
+        console.log(`    First entry: ${entries[0].startedAt.toISOString()}`);
+        console.log(`    Last entry: ${entries[entries.length - 1].endedAt.toISOString()}`);
+      }
 
       let totalMinutes = 0;
       let activeMinutes = 0;
@@ -141,6 +155,11 @@ export class ReportsService {
   }
 
   async getUserTimesheet(userId: string, from: Date, to: Date) {
+    console.log('📊 User Timesheet Query:');
+    console.log('  UserId:', userId);
+    console.log('  From:', from.toISOString());
+    console.log('  To:', to.toISOString());
+    
     const entries = await this.prisma.timeEntry.findMany({
       where: {
         userId,
@@ -149,6 +168,12 @@ export class ReportsService {
       },
       orderBy: { startedAt: 'asc' },
     });
+    
+    console.log(`  Found ${entries.length} entries`);
+    if (entries.length > 0) {
+      console.log(`  First: ${entries[0].startedAt.toISOString()}`);
+      console.log(`  Last: ${entries[entries.length - 1].endedAt.toISOString()}`);
+    }
 
     const adjustments = await this.prisma.adjustment.findMany({
       where: {
@@ -181,5 +206,19 @@ export class ReportsService {
         id: a.id.toString(),
       })),
     };
+  }
+
+  async getUserTimesheetWithTimezone(userId: string, from: string, to: string, timezone?: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { organization: true },
+    });
+
+    const tz = timezone || user?.organization?.timezone || 'Asia/Karachi';
+    
+    const fromDate = zonedTimeToUtc(from + ' 00:00:00', tz);
+    const toDate = zonedTimeToUtc(to + ' 23:59:59', tz);
+
+    return this.getUserTimesheet(userId, fromDate, toDate);
   }
 }
