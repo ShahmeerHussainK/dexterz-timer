@@ -1,5 +1,4 @@
-import { ApiClient } from './api-client'
-import { ActivityBatchItem } from '@time-tracker/shared'
+import { ApiClient, ActivityBatchItem } from './api-client'
 import { uIOhook } from 'uiohook-napi'
 import os from 'os'
 

@@ -3,21 +3,12 @@ node_modules/
 
 # Build output
 dist/
-.next/
-out/
 release/
-apps/backend/dist/
-apps/admin/out/
-apps/desktop/dist/
-apps/desktop/release/
+renderer/dist/
 
 # Environment
 .env
 .env.local
-
-# Logs
-*.log
-npm-debug.log*
 
 # IDE
 .vscode/
@@ -26,6 +17,10 @@ npm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
 
 # Temp
 *.tmp
