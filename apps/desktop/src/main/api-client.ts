@@ -107,4 +107,10 @@ export class ApiClient {
       idleThresholdSeconds: number
     }>('/organizations/schedule')
   }
+
+  async triggerRollup() {
+    return this.request('/activity/rollup', {
+      method: 'POST',
+    })
+  }
 }

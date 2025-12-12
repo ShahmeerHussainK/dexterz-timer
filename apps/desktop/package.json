@@ -11,14 +11,21 @@
     "build": "npm run build:main && npm run build:renderer",
     "build:main": "tsc -p tsconfig.main.json",
     "build:renderer": "vite build",
-    "package": "electron-builder"
+    "rebuild": "electron-rebuild -f -w uiohook-napi",
+    "package": "npm run rebuild && electron-builder"
   },
   "dependencies": {
+    "dotenv": "^17.2.3",
     "electron-store": "^8.1.0",
     "electron-updater": "^6.1.7",
-    "uiohook-napi": "^1.5.3"
+    "node-gyp-build": "^4.8.0",
+    "prebuild-install": "^7.1.1",
+    "uiohook-napi": "^1.5.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@electron/rebuild": "^3.6.0",
     "@types/node": "^20.10.0",
     "@types/react": "^18.2.45",
     "@types/react-dom": "^18.2.18",
@@ -26,8 +33,6 @@
     "concurrently": "^8.2.2",
     "electron": "28.1.0",
     "electron-builder": "^26.0.12",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
     "typescript": "^5.3.3",
     "vite": "^5.0.10",
     "wait-on": "^7.2.0"
@@ -37,26 +42,37 @@
     "productName": "Time Tracker",
     "files": [
       "dist/**/*",
-      "renderer/dist/**/*"
+      "renderer/dist/**/*",
+      "node_modules/**/*",
+      ".env"
+    ],
+    "asarUnpack": [
+      "node_modules/uiohook-napi/**/*"
     ],
     "directories": {
       "output": "release"
     },
     "mac": {
       "category": "public.app-category.productivity",
+      "icon": "build/dexterzlogo.png",
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ]
     },
     "win": {
       "target": "nsis",
+      "icon": "build/dexterzlogo.ico",
       "signAndEditExecutable": false
     },
     "linux": {
-      "target": "AppImage"
+      "target": "AppImage",
+      "icon": "build/dexterzlogo.png"
     }
   }
 }

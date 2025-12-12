@@ -1,4 +1,4 @@
-import { NestFactory } from '@nestjs/core';
+                                                                        import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
@@ -7,7 +7,7 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || ['http://localhost:3000', 'http://localhost:3002'],
+    origin:  ['http://localhost:3000', 'https://dexterztracker.online'],
     credentials: true,
   });
 
@@ -25,7 +25,7 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3001;
   await app.listen(port);
-  
+
   console.log(`🚀 Backend API running on http://localhost:${port}/api`);
 }
 
