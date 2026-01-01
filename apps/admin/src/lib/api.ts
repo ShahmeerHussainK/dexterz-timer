@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://dexterzbackend.online/api'
 
 class ApiClient {
   private token: string | null = null
@@ -152,6 +152,12 @@ class ApiClient {
     return this.request<any>(`/reports/timesheet?userId=${userId}&from=${from}&to=${to}`)
   }
 
+  async getActivityRate(userId: string, from: string, to: string) {
+    return this.request<{ activityRate: number; totalActiveSeconds: number; totalSampleSeconds: number }>(
+      `/reports/activity-rate?userId=${userId}&from=${from}&to=${to}`
+    )
+  }
+
   // Organization
   async getOrganization() {
     return this.request<any>('/organizations/me')
@@ -197,6 +203,13 @@ class ApiClient {
     return this.request<{ message: string }>('/auth/change-password', {
       method: 'POST',
       body: JSON.stringify({ currentPassword, newPassword }),
+    })
+  }
+
+  async resetUserPassword(userId: string, newPassword: string) {
+    return this.request<{ message: string }>(`/users/${userId}/reset-password`, {
+      method: 'POST',
+      body: JSON.stringify({ newPassword }),
     })
   }
 }

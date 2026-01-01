@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { api } from '@/lib/api'
 import { formatMinutes, formatDate } from '@/lib/utils'
 import { toast } from '@/lib/toast'
-import { Plus, Pencil, Trash2, Eye, X, Clock, Activity, TrendingUp, Calendar, BarChart3 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Eye, X, Clock, Activity, TrendingUp, Calendar, BarChart3, Key } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 
 export default function UsersPage() {
@@ -12,10 +12,14 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [showDetailModal, setShowDetailModal] = useState(false)
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [editingUser, setEditingUser] = useState<any>(null)
+  const [resetPasswordUser, setResetPasswordUser] = useState<any>(null)
+  const [newPassword, setNewPassword] = useState('')
   const [selectedUser, setSelectedUser] = useState<any>(null)
   const [timesheet, setTimesheet] = useState<any>(null)
   const [loadingTimesheet, setLoadingTimesheet] = useState(false)
+  const [activityRate, setActivityRate] = useState<number | null>(null)
   const [schedule, setSchedule] = useState<any>(null)
   const [viewType, setViewType] = useState<'daily' | 'weekly' | 'monthly'>('weekly')
   const [dateRange, setDateRange] = useState({
@@ -32,7 +36,28 @@ export default function UsersPage() {
   useEffect(() => {
     loadUsers()
     loadSchedule()
+    checkForAppUpdates()
   }, [])
+
+  const checkForAppUpdates = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/app/version')
+      const data = await response.json()
+      
+      // Store in localStorage to show once per version
+      const lastNotifiedVersion = localStorage.getItem('lastNotifiedAppVersion')
+      
+      if (data.version && lastNotifiedVersion !== data.version) {
+        toast.info(
+          `🎉 New Desktop App v${data.version} Available! Click "Download Desktop App" button in sidebar.`,
+          { duration: 10000 }
+        )
+        localStorage.setItem('lastNotifiedAppVersion', data.version)
+      }
+    } catch (error) {
+      console.log('Could not check for app updates')
+    }
+  }
 
   const loadSchedule = async () => {
     try {
@@ -98,15 +123,39 @@ export default function UsersPage() {
     }
   }
 
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!resetPasswordUser || !newPassword) return
+    
+    try {
+      await api.resetUserPassword(resetPasswordUser.id, newPassword)
+      setShowPasswordModal(false)
+      setResetPasswordUser(null)
+      setNewPassword('')
+      toast.success('Password reset successfully')
+    } catch (error) {
+      console.error('Failed to reset password:', error)
+      toast.error('Failed to reset password')
+    }
+  }
+
   const handleViewDetails = async (user: any) => {
     setSelectedUser(user)
     setShowDetailModal(true)
     setLoadingTimesheet(true)
+    setActivityRate(null)
     try {
-      const data = await api.getUserTimesheet(user.id, dateRange.from, dateRange.to)
-      setTimesheet(data)
+      const [timesheetData, activityRateData] = await Promise.all([
+        api.getUserTimesheet(user.id, dateRange.from, dateRange.to),
+        api.getActivityRate(user.id, dateRange.from, dateRange.to)
+      ])
+      console.log('📊 Activity Rate Data:', activityRateData)
+      console.log('📊 Activity Rate Value:', activityRateData.activityRate)
+      setTimesheet(timesheetData)
+      setActivityRate(activityRateData.activityRate)
+      console.log('📊 State updated with activity rate:', activityRateData.activityRate)
     } catch (error) {
-      console.error('Failed to load timesheet:', error)
+      console.error('Failed to load data:', error)
     } finally {
       setLoadingTimesheet(false)
     }
@@ -149,9 +198,29 @@ export default function UsersPage() {
   
   useEffect(() => {
     if (selectedUser && showDetailModal) {
-      handleViewDetails(selectedUser)
+      // Reload data when date range changes
+      const loadData = async () => {
+        setLoadingTimesheet(true)
+        setActivityRate(null)
+        try {
+          const [timesheetData, activityRateData] = await Promise.all([
+            api.getUserTimesheet(selectedUser.id, dateRange.from, dateRange.to),
+            api.getActivityRate(selectedUser.id, dateRange.from, dateRange.to)
+          ])
+          console.log('📊 Activity Rate Data (useEffect):', activityRateData)
+          console.log('📊 Activity Rate Value (useEffect):', activityRateData.activityRate)
+          setTimesheet(timesheetData)
+          setActivityRate(activityRateData.activityRate)
+          console.log('📊 State updated with activity rate (useEffect):', activityRateData.activityRate)
+        } catch (error) {
+          console.error('Failed to load data:', error)
+        } finally {
+          setLoadingTimesheet(false)
+        }
+      }
+      loadData()
     }
-  }, [dateRange])
+  }, [dateRange, selectedUser, showDetailModal])
 
   if (loading) {
     return (
@@ -162,10 +231,10 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 pb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">Users</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">Users</h1>
           <p className="mt-1 text-sm text-gray-500">👥 Manage organization users</p>
         </div>
         <button
@@ -181,28 +250,91 @@ export default function UsersPage() {
         </button>
       </div>
 
-      <div className="rounded-xl bg-white shadow-lg">
-        <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4">
-          <h2 className="text-lg font-semibold text-gray-900">👤 User Directory</h2>
+      <div className="rounded-xl bg-white shadow-lg overflow-hidden">
+        <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 px-4 sm:px-6 py-4">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">👤 User Directory</h2>
           <p className="text-xs text-gray-500 mt-1">{users.length} total users</p>
         </div>
-        <div className="overflow-x-auto">
+        <div className="block sm:hidden">
+          {/* Mobile Card View */}
+          <div className="divide-y divide-gray-200">
+            {users.map((user) => (
+              <div key={user.id} className="p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-start gap-3">
+                  <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white text-sm font-semibold shadow-md">
+                    {user.fullName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-semibold text-gray-900 truncate">{user.fullName || 'N/A'}</h3>
+                        <p className="text-xs text-gray-500 truncate mt-0.5">{user.email}</p>
+                      </div>
+                      <div className="flex gap-1 flex-shrink-0">
+                        <button
+                          onClick={() => handleViewDetails(user)}
+                          className="rounded-lg p-1.5 text-blue-600 hover:bg-blue-50 transition-colors"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleEdit(user)}
+                          className="rounded-lg p-1.5 text-gray-600 hover:bg-gray-100 transition-colors"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setResetPasswordUser(user)
+                            setShowPasswordModal(true)
+                          }}
+                          className="rounded-lg p-1.5 text-orange-600 hover:bg-orange-50 transition-colors"
+                        >
+                          <Key className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(user.id)}
+                          className="rounded-lg p-1.5 text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      <span className="inline-flex rounded-full bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700">
+                        {user.role}
+                      </span>
+                      <span
+                        className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                          user.isActive
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-gray-100 text-gray-600'
+                        }`}
+                      >
+                        {user.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="hidden sm:block overflow-x-auto">
+          {/* Desktop Table View */}
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   User
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   Role
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   Status
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-3 sm:px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
                   Actions
                 </th>
               </tr>
@@ -210,27 +342,29 @@ export default function UsersPage() {
             <tbody className="divide-y divide-gray-200 bg-white">
               {users.map((user) => (
                 <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-semibold shadow-md">
+                  <td className="px-3 sm:px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white text-xs sm:text-sm font-semibold shadow-md">
                         {user.fullName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
                       </div>
-                      <div className="text-sm font-medium text-gray-900">
-                        {user.fullName || 'N/A'}
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">
+                          {user.fullName || 'N/A'}
+                        </div>
+                        <div className="text-xs text-gray-500 truncate">
+                          {user.email}
+                        </div>
                       </div>
                     </div>
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                    {user.email}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <span className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                  <td className="px-3 sm:px-4 py-3">
+                    <span className="inline-flex rounded-full bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700">
                       {user.role}
                     </span>
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4">
+                  <td className="px-3 sm:px-4 py-3">
                     <span
-                      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                      className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
                         user.isActive
                           ? 'bg-green-100 text-green-700'
                           : 'bg-gray-100 text-gray-600'
@@ -239,28 +373,38 @@ export default function UsersPage() {
                       {user.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
+                  <td className="px-3 sm:px-4 py-3">
+                    <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() => handleViewDetails(user)}
-                        className="rounded-lg p-2 text-blue-600 hover:bg-blue-50 transition-colors"
-                        title="View Details"
+                        className="rounded-lg p-1.5 text-blue-600 hover:bg-blue-50 transition-colors"
+                        title="View"
                       >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
                       </button>
                       <button
                         onClick={() => handleEdit(user)}
-                        className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 transition-colors"
+                        className="rounded-lg p-1.5 text-gray-600 hover:bg-gray-100 transition-colors"
                         title="Edit"
                       >
-                        <Pencil className="h-4 w-4" />
+                        <Pencil className="h-3 w-3 sm:h-4 sm:w-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setResetPasswordUser(user)
+                          setShowPasswordModal(true)
+                        }}
+                        className="rounded-lg p-1.5 text-orange-600 hover:bg-orange-50 transition-colors"
+                        title="Reset"
+                      >
+                        <Key className="h-3 w-3 sm:h-4 sm:w-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(user.id)}
-                        className="rounded-lg p-2 text-red-600 hover:bg-red-50 transition-colors"
+                        className="rounded-lg p-1.5 text-red-600 hover:bg-red-50 transition-colors"
                         title="Delete"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                       </button>
                     </div>
                   </td>
@@ -273,7 +417,7 @@ export default function UsersPage() {
 
       {/* Edit/Create Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4">
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
             <h2 className="text-xl font-bold text-gray-900">
               {editingUser ? 'Edit User' : 'Add User'}
@@ -347,18 +491,62 @@ export default function UsersPage() {
         </div>
       )}
 
+      {/* Reset Password Modal */}
+      {showPasswordModal && resetPasswordUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+            <h2 className="text-xl font-bold text-gray-900">
+              Reset Password for {resetPasswordUser.fullName || resetPasswordUser.email}
+            </h2>
+            <form onSubmit={handleResetPassword} className="mt-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">New Password</label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-primary"
+                  placeholder="Enter new password (min 6 characters)"
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPasswordModal(false)
+                    setResetPasswordUser(null)
+                    setNewPassword('')
+                  }}
+                  className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 rounded-lg bg-orange-600 px-4 py-2 text-white hover:bg-orange-700"
+                >
+                  Reset Password
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* User Detail Modal */}
       {showDetailModal && selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="relative h-[90vh] w-full max-w-6xl overflow-hidden rounded-lg bg-white shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-2 sm:p-4">
+          <div className="relative h-[95vh] sm:h-[90vh] w-full max-w-6xl overflow-hidden rounded-lg bg-white shadow-xl">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-              <div className="flex items-center gap-4">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">
+            <div className="flex items-center justify-between border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 min-w-0 flex-1">
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">
                     {selectedUser.fullName || selectedUser.email}
                   </h2>
-                  <p className="text-sm text-gray-500">{selectedUser.email}</p>
+                  <p className="text-xs sm:text-sm text-gray-500 truncate">{selectedUser.email}</p>
                 </div>
                 <span
                   className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
@@ -386,13 +574,13 @@ export default function UsersPage() {
             </div>
 
             {/* Content */}
-            <div className="h-[calc(90vh-80px)] overflow-y-auto p-6">
+            <div className="h-[calc(95vh-70px)] sm:h-[calc(90vh-80px)] overflow-y-auto p-3 sm:p-6">
               <div className="space-y-6">
               {/* View Type Tabs */}
-              <div className="mb-4 flex gap-2 bg-white rounded-lg p-2 shadow-md w-fit">
+              <div className="mb-4 flex gap-1 sm:gap-2 bg-white rounded-lg p-1 sm:p-2 shadow-md w-full sm:w-fit overflow-x-auto">
                 <button
                   onClick={() => setViewType('daily')}
-                  className={`px-6 py-2 rounded-lg font-semibold transition-all ${
+                  className={`flex-1 sm:flex-none px-3 sm:px-6 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base font-semibold transition-all whitespace-nowrap ${
                     viewType === 'daily'
                       ? 'bg-primary text-white shadow-md'
                       : 'text-gray-600 hover:bg-gray-100'
@@ -402,7 +590,7 @@ export default function UsersPage() {
                 </button>
                 <button
                   onClick={() => setViewType('weekly')}
-                  className={`px-6 py-2 rounded-lg font-semibold transition-all ${
+                  className={`flex-1 sm:flex-none px-3 sm:px-6 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base font-semibold transition-all whitespace-nowrap ${
                     viewType === 'weekly'
                       ? 'bg-primary text-white shadow-md'
                       : 'text-gray-600 hover:bg-gray-100'
@@ -412,7 +600,7 @@ export default function UsersPage() {
                 </button>
                 <button
                   onClick={() => setViewType('monthly')}
-                  className={`px-6 py-2 rounded-lg font-semibold transition-all ${
+                  className={`flex-1 sm:flex-none px-3 sm:px-6 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base font-semibold transition-all whitespace-nowrap ${
                     viewType === 'monthly'
                       ? 'bg-primary text-white shadow-md'
                       : 'text-gray-600 hover:bg-gray-100'
@@ -515,7 +703,7 @@ export default function UsersPage() {
                   })()}
 
                   {/* Stats */}
-                  <div className="mb-6 grid gap-4 md:grid-cols-4">
+                  <div className="mb-6 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 p-4">
                       <div className="flex items-center justify-between">
                         <div>
@@ -579,21 +767,7 @@ export default function UsersPage() {
                         <div>
                           <p className="text-xs font-medium text-purple-600">Activity Rate</p>
                           <p className="mt-1 text-xl font-bold text-purple-900">
-                            {(() => {
-                              const total = timesheet?.entries?.reduce((sum: number, entry: any) => {
-                                const start = new Date(entry.startedAt)
-                                const end = new Date(entry.endedAt)
-                                return sum + Math.floor((end.getTime() - start.getTime()) / 60000)
-                              }, 0) || 0
-                              const active = timesheet?.entries
-                                ?.filter((e: any) => e.kind === 'ACTIVE')
-                                .reduce((sum: number, entry: any) => {
-                                  const start = new Date(entry.startedAt)
-                                  const end = new Date(entry.endedAt)
-                                  return sum + Math.floor((end.getTime() - start.getTime()) / 60000)
-                                }, 0) || 0
-                              return total > 0 ? Math.round((active / total) * 100) : 0
-                            })()}%
+                            {activityRate !== null ? `${activityRate}%` : 'N/A'}
                           </p>
                         </div>
                         <TrendingUp className="h-8 w-8 text-purple-600 opacity-50" />
@@ -610,7 +784,7 @@ export default function UsersPage() {
                       </div>
                     </div>
                     <div className="p-6">
-                      <div className="grid gap-8 md:grid-cols-2">
+                      <div className="grid gap-8 grid-cols-1 lg:grid-cols-2">
                         {/* Bar Chart - Daily Activity */}
                         <div className="rounded-lg bg-gradient-to-br from-gray-50 to-white p-4">
                           <h4 className="mb-4 text-sm font-semibold text-gray-700">Daily Activity Breakdown</h4>
@@ -779,15 +953,15 @@ export default function UsersPage() {
                         {timesheet?.entries?.length || 0} entries
                       </p>
                     </div>
-                    <div>
+                    <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Date</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Start</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">End</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Duration</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Status</th>
+                            <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500">Date</th>
+                            <th className="hidden sm:table-cell px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500">Start</th>
+                            <th className="hidden sm:table-cell px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500">End</th>
+                            <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500">Duration</th>
+                            <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500">Status</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
@@ -797,19 +971,22 @@ export default function UsersPage() {
                             const minutes = Math.floor((end.getTime() - start.getTime()) / 60000)
                             return (
                               <tr key={entry.id} className="hover:bg-gray-50">
-                                <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-900">
-                                  {formatDate(entry.startedAt)}
+                                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">
+                                  <div>{formatDate(entry.startedAt)}</div>
+                                  <div className="sm:hidden text-xs text-gray-500 mt-1">
+                                    {start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - {end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                  </div>
                                 </td>
-                                <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600">
+                                <td className="hidden sm:table-cell whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-gray-600">
                                   {start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                                 </td>
-                                <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600">
+                                <td className="hidden sm:table-cell whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-gray-600">
                                   {end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                                 </td>
-                                <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900">
+                                <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium text-gray-900">
                                   {formatMinutes(minutes)}
                                 </td>
-                                <td className="whitespace-nowrap px-4 py-3">
+                                <td className="px-2 sm:px-4 py-3">
                                   <span
                                     className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
                                       entry.kind === 'ACTIVE'

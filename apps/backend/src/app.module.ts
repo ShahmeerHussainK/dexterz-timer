@@ -8,6 +8,7 @@ import { ActivityModule } from './activity/activity.module';
 import { ReportsModule } from './reports/reports.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { WorkerModule } from './worker/worker.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -29,5 +30,6 @@ import { WorkerModule } from './worker/worker.module';
     OrganizationsModule,
     WorkerModule,
   ],
+  controllers: [AppController],
 })
 export class AppModule {}

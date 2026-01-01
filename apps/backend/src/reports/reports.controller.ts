@@ -85,6 +85,15 @@ export class ReportsController {
     );
   }
 
+  @Get('activity-rate')
+  async getActivityRate(
+    @Query('userId', ParseUUIDPipe) userId: string,
+    @Query('from') from: string,
+    @Query('to') to: string,
+  ) {
+    return this.reportsService.getActivityRate(userId, from, to);
+  }
+
   @Get('my-today')
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.MANAGER, UserRole.MEMBER)
   async getMyToday(@Request() req) {

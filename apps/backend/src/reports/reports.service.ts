@@ -248,4 +248,67 @@ export class ReportsService {
 
     return this.getUserTimesheet(userId, fromDate, toDate);
   }
+
+  async getActivityRate(userId: string, from: string, to: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { organization: { include: { schedule: true } } },
+    });
+
+    if (!user?.organization?.schedule) {
+      throw new Error('Organization schedule not configured');
+    }
+
+    const schedule = user.organization.schedule;
+    const tz = schedule.tz;
+    
+    const fromStartStr = `${from} ${schedule.checkinStart}`;
+    const fromDate = zonedTimeToUtc(fromStartStr, tz);
+    
+    const toNextDay = format(addDays(parse(to, 'yyyy-MM-dd', new Date()), 1), 'yyyy-MM-dd');
+    const toEndStr = `${toNextDay} ${schedule.checkinEnd}`;
+    const toDate = zonedTimeToUtc(toEndStr, tz);
+
+    const samples = await this.prisma.activitySample.findMany({
+      where: {
+        userId,
+        capturedAt: { gte: fromDate, lte: toDate },
+      },
+      select: {
+        activeSeconds: true,
+      },
+    });
+
+    console.log(`📊 Activity Rate Calculation:`);
+    console.log(`  Total samples found: ${samples.length}`);
+    console.log(`  Date range: ${from} to ${to}`);
+
+    let totalActiveSeconds = 0;
+    let totalSampleSeconds = 0;
+    let samplesWithData = 0;
+    let samplesWithoutData = 0;
+
+    for (const sample of samples) {
+      if (sample.activeSeconds != null) {
+        totalActiveSeconds += sample.activeSeconds;
+        totalSampleSeconds += 5; // Each sample is 5 seconds
+        samplesWithData++;
+      } else {
+        samplesWithoutData++;
+      }
+    }
+
+    console.log(`  Samples with activeSeconds: ${samplesWithData}`);
+    console.log(`  Samples without activeSeconds: ${samplesWithoutData}`);
+    console.log(`  Total active seconds: ${totalActiveSeconds}`);
+    console.log(`  Total sample seconds: ${totalSampleSeconds}`);
+
+    const activityRate = totalSampleSeconds > 0 
+      ? Math.round((totalActiveSeconds / totalSampleSeconds) * 100) 
+      : 0;
+
+    console.log(`  Activity Rate: ${activityRate}%`);
+
+    return { activityRate, totalActiveSeconds, totalSampleSeconds };
+  }
 }

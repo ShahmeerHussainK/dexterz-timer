@@ -31,6 +31,19 @@ export class ActivityController {
 
   @Post('batch')
   async batchUpload(@Request() req, @Body() body: { samples: ActivityBatchItem[] }) {
+    console.log(`\n\n========== BATCH UPLOAD DEBUG ==========`);
+    console.log(`User: ${req.user.id}`);
+    console.log(`Samples count: ${body.samples?.length || 0}`);
+    
+    if (body.samples && body.samples.length > 0) {
+      const first = body.samples[0];
+      console.log(`\nFirst sample RAW:`);
+      console.log(JSON.stringify(first, null, 2));
+      console.log(`\nactiveSeconds value: ${first.activeSeconds}`);
+      console.log(`activeSeconds type: ${typeof first.activeSeconds}`);
+    }
+    console.log(`========================================\n\n`);
+    
     return this.activityService.batchUpload(req.user.id, body.samples);
   }
 

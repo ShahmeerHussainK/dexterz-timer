@@ -99,6 +99,7 @@ export interface ActivityBatchItem {
   capturedAt: string; // ISO string
   mouseDelta: number;
   keyCount: number;
+  activeSeconds?: number;
   deviceSessionId?: string;
 }
 

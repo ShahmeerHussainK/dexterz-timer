@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react'
 import { api } from '@/lib/api'
 import { formatMinutes, formatDateTime } from '@/lib/utils'
 import { Calendar, Clock } from 'lucide-react'
+import { LoadingSkeleton } from '@/components/LoadingSkeleton'
 
 export default function TimesheetsPage() {
   const [users, setUsers] = useState<any[]>([])
   const [selectedUser, setSelectedUser] = useState<string>('')
   const [timesheet, setTimesheet] = useState<any>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true) // Start with loading true
   const [dateRange, setDateRange] = useState({
     from: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     to: new Date().toISOString().split('T')[0],
@@ -34,6 +35,8 @@ export default function TimesheetsPage() {
       }
     } catch (error) {
       console.error('Failed to load users:', error)
+    } finally {
+      setLoading(false) // Stop loading after users loaded
     }
   }
 
@@ -55,6 +58,10 @@ export default function TimesheetsPage() {
     const end = new Date(entry.endedAt)
     return sum + Math.floor((end.getTime() - start.getTime()) / 60000)
   }, 0) || 0
+
+  if (loading) {
+    return <LoadingSkeleton />
+  }
 
   return (
     <div className="space-y-6">
@@ -140,17 +147,12 @@ export default function TimesheetsPage() {
       )}
 
       {/* Entries */}
-      {loading ? (
-        <div className="flex h-64 items-center justify-center">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-primary"></div>
+      <div className="rounded-xl bg-white shadow-lg">
+        <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4">
+          <h2 className="text-lg font-semibold text-gray-900">📊 Time Entries</h2>
+          <p className="text-xs text-gray-500 mt-1">{timesheet?.entries?.length || 0} entries found</p>
         </div>
-      ) : (
-        <div className="rounded-xl bg-white shadow-lg">
-          <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4">
-            <h2 className="text-lg font-semibold text-gray-900">📊 Time Entries</h2>
-            <p className="text-xs text-gray-500 mt-1">{timesheet?.entries?.length || 0} entries found</p>
-          </div>
-          <div className="overflow-x-auto">
+        <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
@@ -212,7 +214,7 @@ export default function TimesheetsPage() {
             </table>
           </div>
         </div>
-      )}
-    </div>
+      </div>
+   
   )
 }

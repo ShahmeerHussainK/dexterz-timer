@@ -5,7 +5,7 @@ import {
   isWithinBreakWindow,
   hasActivity,
 } from '@time-tracker/shared';
-import { startOfMinute, addMinutes, isBefore, isAfter } from 'date-fns';
+import { startOfMinute, addMinutes } from 'date-fns';
 
 interface MinuteBucket {
   start: Date;
@@ -178,45 +178,44 @@ export class RollupService {
           }
         }
 
-        // Find overlapping entries of SAME kind (merge)
-        const sameKind = await tx.timeEntry.findMany({
+        // Find overlapping OR adjacent entries of SAME kind
+        const overlappingSameKind = await tx.timeEntry.findMany({
           where: {
             userId,
             source: 'AUTO',
             kind: newEntry.kind,
             OR: [
+              // Overlapping
+              { startedAt: { lt: newEntry.endedAt }, endedAt: { gt: newEntry.startedAt } },
+              // Adjacent (touching)
               { endedAt: newEntry.startedAt },
               { startedAt: newEntry.endedAt },
-              {
-                startedAt: { lt: newEntry.endedAt },
-                endedAt: { gt: newEntry.startedAt },
-              },
             ],
           },
           orderBy: { startedAt: 'asc' },
         });
 
-        if (sameKind.length > 0) {
+        if (overlappingSameKind.length > 0) {
           let minStart = newEntry.startedAt;
           let maxEnd = newEntry.endedAt;
 
-          for (const entry of sameKind) {
+          for (const entry of overlappingSameKind) {
             if (entry.startedAt < minStart) minStart = entry.startedAt;
             if (entry.endedAt > maxEnd) maxEnd = entry.endedAt;
           }
 
           await tx.timeEntry.update({
-            where: { id: sameKind[0].id },
+            where: { id: overlappingSameKind[0].id },
             data: { startedAt: minStart, endedAt: maxEnd },
           });
 
-          if (sameKind.length > 1) {
+          if (overlappingSameKind.length > 1) {
             await tx.timeEntry.deleteMany({
-              where: { id: { in: sameKind.slice(1).map(e => e.id) } },
+              where: { id: { in: overlappingSameKind.slice(1).map(e => e.id) } },
             });
           }
 
-          console.log(`🔄 Merged ${sameKind.length} ${newEntry.kind}: ${minStart.toISOString()} to ${maxEnd.toISOString()}`);
+          console.log(`🔄 Merged ${overlappingSameKind.length + 1} overlapping/adjacent ${newEntry.kind}: ${minStart.toISOString()} to ${maxEnd.toISOString()}`);
         } else {
           await tx.timeEntry.create({ data: newEntry });
           console.log(`➕ Created ${newEntry.kind}: ${newEntry.startedAt.toISOString()} to ${newEntry.endedAt.toISOString()}`);

@@ -5,15 +5,45 @@ node_modules/
 dist/
 .next/
 out/
-release/
 apps/backend/dist/
 apps/admin/out/
+apps/admin/.next/
+
+# Desktop source code (only build goes to repo)
+apps/desktop/src/
+apps/desktop/renderer/
+apps/desktop/node_modules/
 apps/desktop/dist/
+apps/desktop/.env
+apps/desktop/BUILD.md
+apps/desktop/.github/
+apps/desktop/vite.config.ts
+apps/desktop/tsconfig*.json
+apps/desktop/package.json
+apps/desktop/.gitignore
+
+# Desktop builds (exe files can be added manually if needed)
 apps/desktop/release/
 
-# Environment
+# Backend downloads (exe files - upload manually to server)
+apps/backend/public/downloads/*.exe
+apps/backend/public/downloads/*.blockmap
+apps/backend/public/downloads/*.yml
+
+# Environment files (keep .env.example)
 .env
 .env.local
+apps/.env.backup
+apps/admin/.env
+apps/backend/.env
+apps/desktop/.env
+
+# Database
+*.db
+
+# Prisma migrations SQL (keep migration.sql in migrations folder)
+apps/backend/prisma/migrations/*.sql
+!apps/backend/prisma/migrations/*/migration.sql
 
 # Logs
 *.log
@@ -26,7 +56,18 @@ npm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
+__MACOSX/
 
 # Temp
 *.tmp
 .cache/
+
+# Test/Debug files
+check-db.js
+
+# Scripts (keep if needed for deployment)
+setup-env.sh
+start.sh
+
+# Docker
+.dockerignore

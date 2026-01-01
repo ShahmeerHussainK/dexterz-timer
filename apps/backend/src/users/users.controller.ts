@@ -64,4 +64,13 @@ export class UsersController {
     await this.usersService.delete(id);
     return { message: 'User deleted successfully' };
   }
+
+  @Post(':id/reset-password')
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  async resetPassword(
+    @Param('id') id: string,
+    @Body() body: { newPassword: string },
+  ) {
+    return this.usersService.resetPassword(id, body.newPassword);
+  }
 }

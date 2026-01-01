@@ -16,6 +16,7 @@ export default function DashboardLayout({
   const pathname = usePathname()
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
+  const [hasUpdate, setHasUpdate] = useState(false)
 
   useEffect(() => {
     const token = api.getToken()
@@ -23,8 +24,49 @@ export default function DashboardLayout({
       router.push('/login')
     } else {
       loadUser()
+      checkForAppUpdates()
     }
   }, [router])
+
+  const checkForAppUpdates = async () => {
+    try {
+      const response = await fetch('https://dexterzbackend.online/api/app/version')
+      const data = await response.json()
+      
+      const lastNotifiedVersion = localStorage.getItem('lastNotifiedAppVersion')
+      
+      if (data.version && lastNotifiedVersion !== data.version) {
+        setHasUpdate(true)
+        
+        setTimeout(() => {
+          const toast = document.createElement('div')
+          toast.className = 'fixed top-4 right-4 bg-blue-600 text-white px-6 py-4 rounded-lg shadow-lg z-50 max-w-md animate-slide-in'
+          toast.innerHTML = `
+            <div class="flex items-center gap-3">
+              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <div>
+                <div class="font-semibold">🎉 New Desktop App Available!</div>
+                <div class="text-sm text-blue-100">Version ${data.version} - Click "Download Desktop App" in sidebar</div>
+              </div>
+              <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-blue-200 hover:text-white">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          `
+          document.body.appendChild(toast)
+          setTimeout(() => toast.remove(), 10000)
+        }, 1000)
+        
+        localStorage.setItem('lastNotifiedAppVersion', data.version)
+      }
+    } catch (error) {
+      console.error('Could not check for app updates:', error)
+    }
+  }
 
   const loadUser = async () => {
     try {
@@ -78,6 +120,26 @@ export default function DashboardLayout({
               <p className="text-xs text-gray-500 truncate">{user?.email}</p>
             </div>
           </div>
+        </div>
+
+        {/* Download Desktop App */}
+        <div className="p-3 border-b border-gray-200">
+          <a
+            href="https://dexterzbackend.online/downloads/TimeTracker-Setup.exe"
+            download
+            className="relative flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 transition-all shadow-sm hover:shadow-md"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Download Desktop App
+            {hasUpdate && (
+              <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+              </span>
+            )}
+          </a>
         </div>
 
         {/* Navigation */}

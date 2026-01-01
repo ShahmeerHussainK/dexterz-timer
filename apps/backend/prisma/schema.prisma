@@ -75,6 +75,7 @@ model ActivitySample {
   capturedAt       DateTime  @map("captured_at") @db.Timestamptz
   mouseDelta       Int       @map("mouse_delta")
   keyCount         Int       @map("key_count")
+  activeSeconds    Int?      @map("active_seconds")
   deviceSessionId  String?   @map("device_session_id") @db.Uuid
 
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)

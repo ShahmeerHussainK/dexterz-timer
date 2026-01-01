@@ -173,14 +173,25 @@ export class ActivityService {
 
     // Batch insert
     if (validSamples.length > 0) {
+      // Debug: Log first sample to verify activeSeconds
+      if (validSamples.length > 0) {
+        const firstSample = validSamples[0];
+        console.log(`🔍 First sample data: activeSeconds=${firstSample.activeSeconds}, mouse=${firstSample.mouseDelta}, keys=${firstSample.keyCount}`);
+      }
+      
+      const dataToInsert = validSamples.map((sample) => ({
+        userId,
+        capturedAt: new Date(sample.capturedAt),
+        mouseDelta: sample.mouseDelta,
+        keyCount: sample.keyCount,
+        activeSeconds: sample.activeSeconds ?? null,
+        deviceSessionId: sample.deviceSessionId || null,
+      }));
+      
+      console.log(`🔍 First insert data:`, JSON.stringify(dataToInsert[0]));
+      
       await this.prisma.activitySample.createMany({
-        data: validSamples.map((sample) => ({
-          userId,
-          capturedAt: new Date(sample.capturedAt),
-          mouseDelta: sample.mouseDelta,
-          keyCount: sample.keyCount,
-          deviceSessionId: sample.deviceSessionId || null,
-        })),
+        data: dataToInsert,
       });
 
       console.log(`✅ Inserted ${validSamples.length} samples into database`);
