@@ -1,6 +1,6 @@
 {
   "name": "@time-tracker/desktop",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Time Tracker Desktop App",
   "author": "Dexterz Technologies",
   "main": "dist/main.js",
@@ -12,7 +12,8 @@
     "build:main": "tsc -p tsconfig.main.json",
     "build:renderer": "vite build",
     "rebuild": "electron-rebuild -f -w uiohook-napi",
-    "package": "npm run rebuild && electron-builder"
+    "package": "npm run build && npm run rebuild && electron-builder",
+    "package:skip-rebuild": "npm run build && electron-builder"
   },
   "dependencies": {
     "dotenv": "^17.2.3",
@@ -49,6 +50,13 @@
     "asarUnpack": [
       "node_modules/uiohook-napi/**/*"
     ],
+    "extraResources": [
+      {
+        "from": "build",
+        "to": "build",
+        "filter": ["**/*"]
+      }
+    ],
     "directories": {
       "output": "release"
     },
@@ -66,9 +74,25 @@
       ]
     },
     "win": {
-      "target": "nsis",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
       "icon": "build/dexterzlogo.ico",
-      "signAndEditExecutable": false
+      "signAndEditExecutable": false,
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "build/dexterzlogo.ico",
+      "uninstallerIcon": "build/dexterzlogo.ico",
+      "installerHeaderIcon": "build/dexterzlogo.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Time Tracker"
     },
     "linux": {
       "target": "AppImage",
