@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
@@ -37,16 +38,18 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen">
       {/* Left Panel - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-purple-700 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-teal-500 via-teal-600 to-teal-700 relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%23ffffff%22%20fill-opacity%3D%220.05%22%3E%3Cpath%20d%3D%22M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E')] opacity-50" />
         
         <div className="relative z-10 flex flex-col justify-between p-12 text-white">
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <Clock className="w-8 h-8" strokeWidth={1.5} />
-              <span className="text-2xl font-bold">TimeTracker</span>
+            <div className="flex items-center gap-4 mb-2">
+              <div className="w-16 h-16 rounded-xl bg-white flex items-center justify-center p-2 shadow-md">
+                <Image src="/logo.png" alt="Logo" width={100} height={100} className="w-full h-full object-contain" />
+              </div>
+              <span className="text-2xl font-bold">Time Tracker</span>
             </div>
-            <p className="text-white/80 text-sm">Admin Dashboard</p>
+            <p className="text-white/80 text-sm">Professional Time Tracking</p>
           </div>
 
           <div className="space-y-8">
@@ -85,10 +88,8 @@ export default function LoginPage() {
         <div className="w-full max-w-md space-y-8">
           {/* Mobile Logo */}
           <div className="lg:hidden flex justify-center mb-8">
-            <div className="relative">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center shadow-lg">
-                <Clock className="w-10 h-10 text-white" strokeWidth={1.5} />
-              </div>
+            <div className="w-32 h-32 rounded-2xl bg-white flex items-center justify-center p-4 shadow-xl">
+              <Image src="/logo.png" alt="Logo" width={200} height={200} className="w-full h-full object-contain" />
             </div>
           </div>
 
@@ -97,7 +98,7 @@ export default function LoginPage() {
               Welcome back
             </h2>
             <p className="mt-2 text-gray-600">
-              Sign in to your admin account to continue
+              Sign in to your account to continue
             </p>
           </div>
 
@@ -121,8 +122,8 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@company.com"
-                  className="flex h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-base transition-all duration-200 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                  placeholder="you@dexterztechnologies.com"
+                  className="flex h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-base transition-all duration-200 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
 
@@ -139,7 +140,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="flex h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-base transition-all duration-200 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-base transition-all duration-200 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
             </div>
@@ -147,7 +148,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="inline-flex items-center justify-center gap-2 w-full h-12 px-8 text-base font-semibold rounded-lg bg-gradient-to-r from-blue-600 to-purple-700 text-white shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 w-full h-12 px-8 text-base font-semibold rounded-lg bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
             >
               {loading ? (
                 <>
