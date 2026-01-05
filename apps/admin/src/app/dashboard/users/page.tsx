@@ -6,6 +6,7 @@ import { formatMinutes, formatDate } from '@/lib/utils'
 import { toast } from '@/lib/toast'
 import { Plus, Pencil, Trash2, Eye, X, Clock, Activity, TrendingUp, Calendar, BarChart3, Key } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+import { GroupedTimeline } from '@/components/GroupedTimeline'
 
 export default function UsersPage() {
   const [users, setUsers] = useState<any[]>([])
@@ -951,63 +952,10 @@ export default function UsersPage() {
                       <h3 className="font-semibold text-gray-900">Activity Timeline</h3>
                       <p className="text-xs text-gray-500">
                         {timesheet?.entries?.length || 0} entries
+                        {viewType !== 'daily' && ' (grouped by day)'}
                       </p>
                     </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500">Date</th>
-                            <th className="hidden sm:table-cell px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500">Start</th>
-                            <th className="hidden sm:table-cell px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500">End</th>
-                            <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500">Duration</th>
-                            <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                          {timesheet?.entries?.map((entry: any) => {
-                            const start = new Date(entry.startedAt)
-                            const end = new Date(entry.endedAt)
-                            const minutes = Math.floor((end.getTime() - start.getTime()) / 60000)
-                            return (
-                              <tr key={entry.id} className="hover:bg-gray-50">
-                                <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">
-                                  <div>{formatDate(entry.startedAt)}</div>
-                                  <div className="sm:hidden text-xs text-gray-500 mt-1">
-                                    {start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - {end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                                  </div>
-                                </td>
-                                <td className="hidden sm:table-cell whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-gray-600">
-                                  {start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                                </td>
-                                <td className="hidden sm:table-cell whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-gray-600">
-                                  {end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                                </td>
-                                <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium text-gray-900">
-                                  {formatMinutes(minutes)}
-                                </td>
-                                <td className="px-2 sm:px-4 py-3">
-                                  <span
-                                    className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                                      entry.kind === 'ACTIVE'
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-yellow-100 text-yellow-800'
-                                    }`}
-                                  >
-                                    {entry.kind}
-                                  </span>
-                                </td>
-                              </tr>
-                            )
-                          })}
-                        </tbody>
-                      </table>
-                      {(!timesheet?.entries || timesheet.entries.length === 0) && (
-                        <div className="py-12 text-center text-sm text-gray-500">
-                          No activity recorded for this period
-                        </div>
-                      )}
-                    </div>
+                    <GroupedTimeline entries={timesheet?.entries || []} viewType={viewType} />
                   </div>
                 </>
               )}
