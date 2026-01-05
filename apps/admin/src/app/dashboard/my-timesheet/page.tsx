@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { api } from '@/lib/api'
-import { formatMinutes, formatDate, getWorkingDay } from '@/lib/utils'
+import { formatMinutes, formatDate } from '@/lib/utils'
 import { Clock, Activity, TrendingUp, Calendar, BarChart3 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { GroupedTimeline } from '@/components/GroupedTimeline'
