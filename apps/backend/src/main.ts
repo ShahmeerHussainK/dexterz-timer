@@ -9,7 +9,7 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin:  ['https://dexterztracker.online'],
+    origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'],
     credentials: true,
   });
 
