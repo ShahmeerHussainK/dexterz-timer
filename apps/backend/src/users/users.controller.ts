@@ -53,7 +53,13 @@ export class UsersController {
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   async update(
     @Param('id') id: string,
-    @Body() body: { fullName?: string; role?: UserRole; isActive?: boolean },
+    @Body() body: { 
+      fullName?: string; 
+      role?: UserRole; 
+      isActive?: boolean;
+      customCheckinStart?: string;
+      customCheckinEnd?: string;
+    },
   ) {
     return this.usersService.update(id, body);
   }

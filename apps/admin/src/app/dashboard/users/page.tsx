@@ -32,6 +32,8 @@ export default function UsersPage() {
     password: '',
     fullName: '',
     role: 'MEMBER',
+    customCheckinStart: '',
+    customCheckinEnd: '',
   })
 
   useEffect(() => {
@@ -49,10 +51,7 @@ export default function UsersPage() {
       const lastNotifiedVersion = localStorage.getItem('lastNotifiedAppVersion')
       
       if (data.version && lastNotifiedVersion !== data.version) {
-        toast.info(
-          `🎉 New Desktop App v${data.version} Available! Click "Download Desktop App" button in sidebar.`,
-          { duration: 10000 }
-        )
+        toast.info(`🎉 New Desktop App v${data.version} Available! Click "Download Desktop App" button in sidebar.`)
         localStorage.setItem('lastNotifiedAppVersion', data.version)
       }
     } catch (error) {
@@ -87,13 +86,15 @@ export default function UsersPage() {
         await api.updateUser(editingUser.id, {
           fullName: formData.fullName,
           role: formData.role,
+          customCheckinStart: formData.customCheckinStart || null,
+          customCheckinEnd: formData.customCheckinEnd || null,
         })
       } else {
         await api.createUser(formData)
       }
       setShowModal(false)
       setEditingUser(null)
-      setFormData({ email: '', password: '', fullName: '', role: 'MEMBER' })
+      setFormData({ email: '', password: '', fullName: '', role: 'MEMBER', customCheckinStart: '', customCheckinEnd: '' })
       loadUsers()
       toast.success(editingUser ? 'User updated successfully' : 'User created successfully')
     } catch (error) {
@@ -109,6 +110,8 @@ export default function UsersPage() {
       password: '',
       fullName: user.fullName || '',
       role: user.role,
+      customCheckinStart: user.customCheckinStart || '',
+      customCheckinEnd: user.customCheckinEnd || '',
     })
     setShowModal(true)
   }
@@ -241,7 +244,7 @@ export default function UsersPage() {
         <button
           onClick={() => {
             setEditingUser(null)
-            setFormData({ email: '', password: '', fullName: '', role: 'MEMBER' })
+            setFormData({ email: '', password: '', fullName: '', role: 'MEMBER', customCheckinStart: '', customCheckinEnd: '' })
             setShowModal(true)
           }}
           className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-primary to-primary/80 px-4 py-2 text-sm font-medium text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
@@ -469,6 +472,34 @@ export default function UsersPage() {
                   <option value="OWNER">Owner</option>
                 </select>
               </div>
+              {editingUser && (
+                <>
+                  <div className="border-t pt-4">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">⏰ Custom Tracking Time (Optional)</h3>
+                    <p className="text-xs text-gray-500 mb-3">Leave empty to use organization default ({schedule?.checkinStart} - {schedule?.checkinEnd})</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700">Start Time</label>
+                        <input
+                          type="time"
+                          value={formData.customCheckinStart}
+                          onChange={(e) => setFormData({ ...formData, customCheckinStart: e.target.value })}
+                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-primary"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700">End Time</label>
+                        <input
+                          type="time"
+                          value={formData.customCheckinEnd}
+                          onChange={(e) => setFormData({ ...formData, customCheckinEnd: e.target.value })}
+                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-primary"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
               <div className="flex gap-3">
                 <button
                   type="button"
@@ -794,7 +825,7 @@ export default function UsersPage() {
                               data={(() => {
                                 const dailyData: any = {}
                                 timesheet?.entries?.forEach((entry: any) => {
-                                  const date = formatDate(entry.startedAt)
+                                  const date = new Date(entry.startedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                                   if (!dailyData[date]) {
                                     dailyData[date] = { date, active: 0, idle: 0 }
                                   }

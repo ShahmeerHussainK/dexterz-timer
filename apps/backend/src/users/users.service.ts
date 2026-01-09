@@ -16,6 +16,8 @@ export class UsersService {
         fullName: true,
         role: true,
         isActive: true,
+        customCheckinStart: true,
+        customCheckinEnd: true,
         createdAt: true,
       },
     });
@@ -76,6 +78,8 @@ export class UsersService {
       fullName?: string;
       role?: UserRole;
       isActive?: boolean;
+      customCheckinStart?: string;
+      customCheckinEnd?: string;
     },
   ) {
     return this.prisma.user.update({
@@ -87,6 +91,8 @@ export class UsersService {
         fullName: true,
         role: true,
         isActive: true,
+        customCheckinStart: true,
+        customCheckinEnd: true,
         createdAt: true,
       },
     });

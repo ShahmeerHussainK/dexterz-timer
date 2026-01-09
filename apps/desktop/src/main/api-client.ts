@@ -1,11 +1,23 @@
+import dotenv from 'dotenv'
+import path from 'path'
+
+// Load environment variables
+dotenv.config({ path: path.join(__dirname, '../.env') })
+
 export interface ActivityBatchItem {
   capturedAt: string
   mouseDelta: number
   keyCount: number
+  activeSeconds?: number
   deviceSessionId?: string
 }
 
 const API_URL = process.env.API_URL || 'https://dexterzbackend.online/api'
+
+console.log('\n========== API CLIENT CONFIG ==========');
+console.log('API_URL:', API_URL);
+console.log('process.env.API_URL:', process.env.API_URL);
+console.log('========================================\n');
 
 export class ApiClient {
   private token: string | null = null
@@ -106,6 +118,17 @@ export class ApiClient {
       breakEnd: string
       idleThresholdSeconds: number
     }>('/organizations/schedule')
+  }
+
+  async getMe() {
+    return this.request<{
+      id: string
+      email: string
+      fullName: string
+      role: string
+      customCheckinStart: string | null
+      customCheckinEnd: string | null
+    }>('/auth/me')
   }
 
   async triggerRollup() {
