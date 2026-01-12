@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { api } from '@/lib/api'
-import { formatMinutes, formatDate } from '@/lib/utils'
+import { formatMinutes, formatDate, formatTime } from '@/lib/utils'
 import { toast } from '@/lib/toast'
 import { Plus, Pencil, Trash2, Eye, X, Clock, Activity, TrendingUp, Calendar, BarChart3, Key } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
@@ -728,7 +728,7 @@ export default function UsersPage() {
                         <span className="text-xs font-medium text-gray-600">Check-in:</span>
                         <span className={`text-sm font-bold ${color}`}>{status}</span>
                         <span className="text-xs text-gray-500">
-                          {start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                          {formatTime(firstEntry.startedAt)}
                         </span>
                       </div>
                     )
