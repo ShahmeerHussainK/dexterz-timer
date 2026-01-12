@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
-import { formatMinutes, formatDate, getWorkingDay } from '@/lib/utils'
+import { formatMinutes, formatDate, formatTime, getWorkingDay } from '@/lib/utils'
 
 interface TimeEntry {
   id: string | number
@@ -97,14 +97,14 @@ export function GroupedTimeline({ entries, viewType }: GroupedTimelineProps) {
                   <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">
                     <div>{getWorkingDay(entry.startedAt)}</div>
                     <div className="sm:hidden text-xs text-gray-500 mt-1">
-                      {start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - {end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                      {formatTime(entry.startedAt)} - {formatTime(entry.endedAt)}
                     </div>
                   </td>
                   <td className="hidden sm:table-cell whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-gray-600">
-                    {start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                    {formatTime(entry.startedAt)}
                   </td>
                   <td className="hidden sm:table-cell whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-gray-600">
-                    {end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                    {formatTime(entry.endedAt)}
                   </td>
                   <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium text-gray-900">
                     {formatMinutes(minutes)}
@@ -195,10 +195,10 @@ export function GroupedTimeline({ entries, viewType }: GroupedTimelineProps) {
                       <td className="px-2 sm:px-4 py-2"></td>
                       <td className="px-2 sm:px-4 py-2 text-xs text-gray-600 pl-8">
                         <div className="sm:hidden">
-                          {start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - {end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                          {formatTime(entry.startedAt)} - {formatTime(entry.endedAt)}
                         </div>
                         <div className="hidden sm:block">
-                          {start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} → {end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                          {formatTime(entry.startedAt)} → {formatTime(entry.endedAt)}
                         </div>
                       </td>
                       <td className="px-2 sm:px-4 py-2 text-xs font-medium text-gray-900">
