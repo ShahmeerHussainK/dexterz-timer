@@ -13,11 +13,13 @@ export function formatMinutes(minutes: number): string {
 
 export function formatDate(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date
-  return d.toLocaleDateString('en-US', {
+  const dateStr = d.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
   })
+  const dayName = d.toLocaleDateString('en-US', { weekday: 'long' })
+  return `${dateStr} - ${dayName}`
 }
 
 // Get the working day date for time tracking (handles cross-midnight sessions)

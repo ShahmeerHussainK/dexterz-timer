@@ -167,7 +167,7 @@ export function GroupedTimeline({ entries, viewType }: GroupedTimelineProps) {
                     )}
                   </td>
                   <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-semibold text-gray-900">
-                    {day.date}
+                    {formatDate(day.date)}
                   </td>
                   <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-bold text-blue-900">
                     {formatMinutes(day.totalMinutes)}
