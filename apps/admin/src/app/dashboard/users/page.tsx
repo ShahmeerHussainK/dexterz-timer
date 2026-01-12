@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { api } from '@/lib/api'
-import { formatMinutes, formatDate, formatTime } from '@/lib/utils'
+import { formatMinutes, formatDate, formatTime, toOrgTimezone } from '@/lib/utils'
 import { toast } from '@/lib/toast'
 import { Plus, Pencil, Trash2, Eye, X, Clock, Activity, TrendingUp, Calendar, BarChart3, Key } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
@@ -692,14 +692,18 @@ export default function UsersPage() {
                     const firstEntry = timesheet?.entries?.[0]
                     if (!firstEntry || !schedule) return null
                     
-                    const start = new Date(firstEntry.startedAt)
+                    // Convert to org timezone
+                    const start = toOrgTimezone(firstEntry.startedAt)
                     const hour = start.getHours()
                     const minute = start.getMinutes()
                     const timeInMinutes = hour * 60 + minute
                     
-                    // Parse schedule times
-                    const [startHour, startMin] = schedule.checkinStart.split(':').map(Number)
-                    const [endHour, endMin] = schedule.checkinEnd.split(':').map(Number)
+                    // Use user custom times if available, otherwise org defaults
+                    const userCheckinStart = selectedUser.customCheckinStart || schedule.checkinStart
+                    const userCheckinEnd = selectedUser.customCheckinEnd || schedule.checkinEnd
+                    
+                    const [startHour, startMin] = userCheckinStart.split(':').map(Number)
+                    const [endHour, endMin] = userCheckinEnd.split(':').map(Number)
                     const checkinStart = startHour * 60 + startMin
                     const checkinEnd = endHour * 60 + endMin
                     const onTimeEnd = checkinStart + 15
