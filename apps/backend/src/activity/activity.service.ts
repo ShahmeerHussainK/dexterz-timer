@@ -108,7 +108,7 @@ export class ActivityService {
       return { inserted: 0 };
     }
 
-    // Get organization schedule
+    // Get organization schedule and user custom times
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -128,11 +128,12 @@ export class ActivityService {
 
     const schedule = user.organization.schedule;
 
+    // Use user custom times if set, otherwise fallback to organization defaults
     const rules = {
       timezone: schedule.tz,
       checkinWindow: {
-        start: schedule.checkinStart,
-        end: schedule.checkinEnd,
+        start: user.customCheckinStart || schedule.checkinStart,
+        end: user.customCheckinEnd || schedule.checkinEnd,
       },
       breakWindow: {
         start: schedule.breakStart,
