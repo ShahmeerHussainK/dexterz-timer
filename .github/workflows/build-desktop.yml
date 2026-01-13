@@ -25,8 +25,9 @@ jobs:
       
       - name: Install dependencies
         run: |
-          npm install
+          npm ci
           cd apps/desktop
+          rm -rf node_modules package-lock.json
           npm install
       
       - name: Build desktop app
