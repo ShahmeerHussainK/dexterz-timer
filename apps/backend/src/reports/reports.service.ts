@@ -55,24 +55,34 @@ export class ReportsService {
     const schedule = org.schedule;
     const dateStr = date.toISOString().split('T')[0];
     
-    // Working day boundaries: dateStr at checkinStart to next day at checkinEnd
-    const startStr = `${dateStr} ${schedule.checkinStart}`;
+    // Use earliest start and latest end from all users to capture all entries
+    const users = await this.prisma.user.findMany({
+      where: { orgId, isActive: true },
+      select: { id: true, fullName: true, email: true, customCheckinStart: true, customCheckinEnd: true },
+    });
+    
+    const earliestStart = users.reduce((min, u) => {
+      const start = u.customCheckinStart || schedule.checkinStart;
+      return start < min ? start : min;
+    }, schedule.checkinStart);
+    
+    const latestEnd = users.reduce((max, u) => {
+      const end = u.customCheckinEnd || schedule.checkinEnd;
+      return end > max ? end : max;
+    }, schedule.checkinEnd);
+    
+    const startStr = `${dateStr} ${earliestStart}`;
     const from = zonedTimeToUtc(startStr, schedule.tz);
     
     const nextDay = format(addDays(parse(dateStr, 'yyyy-MM-dd', new Date()), 1), 'yyyy-MM-dd');
-    const endStr = `${nextDay} ${schedule.checkinEnd}`;
+    const endStr = `${nextDay} ${latestEnd}`;
     const to = zonedTimeToUtc(endStr, schedule.tz);
     
     console.log('📅 Daily Report Query (Working Day):');
     console.log('  Working Date:', dateStr);
-    console.log('  Schedule:', `${schedule.checkinStart} - ${schedule.checkinEnd}`);
+    console.log('  Schedule:', `${earliestStart} - ${latestEnd}`);
     console.log('  From:', from.toISOString());
     console.log('  To:', to.toISOString());
-
-    const users = await this.prisma.user.findMany({
-      where: { orgId, isActive: true },
-      select: { id: true, fullName: true, email: true },
-    });
 
     const report = {
       date: date.toISOString().split('T')[0],
@@ -182,6 +192,11 @@ export class ReportsService {
         startedAt: { gte: from },
         endedAt: { lte: to },
       },
+      include: {
+        project: {
+          select: { id: true, name: true, color: true }
+        }
+      },
       orderBy: { startedAt: 'asc' },
     });
     
@@ -237,13 +252,15 @@ export class ReportsService {
     const schedule = user.organization.schedule;
     const tz = timezone || schedule.tz;
     
-    // Working day boundaries for from date
-    const fromStartStr = `${from} ${schedule.checkinStart}`;
+    // Use user custom times if set, otherwise fallback to organization defaults
+    const checkinStart = user.customCheckinStart || schedule.checkinStart;
+    const checkinEnd = user.customCheckinEnd || schedule.checkinEnd;
+    
+    const fromStartStr = `${from} ${checkinStart}`;
     const fromDate = zonedTimeToUtc(fromStartStr, tz);
     
-    // Working day boundaries for to date (end is next day at checkinEnd)
     const toNextDay = format(addDays(parse(to, 'yyyy-MM-dd', new Date()), 1), 'yyyy-MM-dd');
-    const toEndStr = `${toNextDay} ${schedule.checkinEnd}`;
+    const toEndStr = `${toNextDay} ${checkinEnd}`;
     const toDate = zonedTimeToUtc(toEndStr, tz);
 
     return this.getUserTimesheet(userId, fromDate, toDate);
@@ -262,11 +279,15 @@ export class ReportsService {
     const schedule = user.organization.schedule;
     const tz = schedule.tz;
     
-    const fromStartStr = `${from} ${schedule.checkinStart}`;
+    // Use user custom times if set, otherwise fallback to organization defaults
+    const checkinStart = user.customCheckinStart || schedule.checkinStart;
+    const checkinEnd = user.customCheckinEnd || schedule.checkinEnd;
+    
+    const fromStartStr = `${from} ${checkinStart}`;
     const fromDate = zonedTimeToUtc(fromStartStr, tz);
     
     const toNextDay = format(addDays(parse(to, 'yyyy-MM-dd', new Date()), 1), 'yyyy-MM-dd');
-    const toEndStr = `${toNextDay} ${schedule.checkinEnd}`;
+    const toEndStr = `${toNextDay} ${checkinEnd}`;
     const toDate = zonedTimeToUtc(toEndStr, tz);
 
     const samples = await this.prisma.activitySample.findMany({

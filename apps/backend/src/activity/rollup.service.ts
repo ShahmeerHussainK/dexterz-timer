@@ -17,9 +17,9 @@ interface MinuteBucket {
 export class RollupService {
   constructor(private prisma: PrismaService) {}
 
-  async rollupUserActivity(userId: string, from: Date, to: Date) {
+  async rollupUserActivity(userId: string, from: Date, to: Date, projectId?: string) {
     try {
-      console.log(`🔄 Starting rollup for user ${userId} from ${from.toISOString()} to ${to.toISOString()}`);
+      console.log(`🔄 Starting rollup for user ${userId} from ${from.toISOString()} to ${to.toISOString()}, project: ${projectId || 'None'}`);
       
       // Get user's organization schedule
       const user = await this.prisma.user.findUnique({
@@ -43,11 +43,12 @@ export class RollupService {
 
     const schedule = user.organization.schedule;
 
+    // Use user custom times if set, otherwise fallback to organization defaults
     const rules = {
       timezone: schedule.tz,
       checkinWindow: {
-        start: schedule.checkinStart,
-        end: schedule.checkinEnd,
+        start: user.customCheckinStart || schedule.checkinStart,
+        end: user.customCheckinEnd || schedule.checkinEnd,
       },
       breakWindow: {
         start: schedule.breakStart,
@@ -120,6 +121,9 @@ export class RollupService {
       if (merged.length === 0) return;
 
       for (const newEntry of merged) {
+        // Add projectId to entry
+        const entryWithProject = { ...newEntry, projectId: projectId || null };
+        
         // Check if exact entry already exists
         const existingExact = await tx.timeEntry.findFirst({
           where: {
@@ -217,7 +221,7 @@ export class RollupService {
 
           console.log(`🔄 Merged ${overlappingSameKind.length + 1} overlapping/adjacent ${newEntry.kind}: ${minStart.toISOString()} to ${maxEnd.toISOString()}`);
         } else {
-          await tx.timeEntry.create({ data: newEntry });
+          await tx.timeEntry.create({ data: entryWithProject });
           console.log(`➕ Created ${newEntry.kind}: ${newEntry.startedAt.toISOString()} to ${newEntry.endedAt.toISOString()}`);
         }
       }
