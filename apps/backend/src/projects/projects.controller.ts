@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { UserRole } from '@prisma/client';
 
 @Controller('projects')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -11,7 +12,7 @@ export class ProjectsController {
   constructor(private projectsService: ProjectsService) {}
 
   @Post()
-  @Roles('OWNER', 'ADMIN', 'MANAGER')
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.MANAGER)
   create(@CurrentUser() user: any, @Body() body: { name: string; description?: string; color?: string; teamId?: string }) {
     return this.projectsService.create(user.orgId, user.id, body);
   }
@@ -27,13 +28,13 @@ export class ProjectsController {
   }
 
   @Put(':id')
-  @Roles('OWNER', 'ADMIN', 'MANAGER')
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.MANAGER)
   update(@CurrentUser() user: any, @Param('id') id: string, @Body() body: any) {
     return this.projectsService.update(id, user.orgId, body);
   }
 
   @Delete(':id')
-  @Roles('OWNER', 'ADMIN')
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
   delete(@CurrentUser() user: any, @Param('id') id: string) {
     return this.projectsService.delete(id, user.orgId);
   }
