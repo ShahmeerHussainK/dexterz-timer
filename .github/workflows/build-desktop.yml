@@ -8,12 +8,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+  build-mac:
+    runs-on: macos-13  # Intel Mac
     
     steps:
       - name: Checkout code
@@ -25,9 +21,7 @@ jobs:
           node-version: '20'
       
       - name: Install root dependencies
-        run: |
-          npm install
-          npm install @rollup/rollup-darwin-arm64 --save-optional
+        run: npm install
       
       - name: Install desktop dependencies
         run: npm install
@@ -40,7 +34,5 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: desktop-app-${{ matrix.os }}
-          path: |
-            apps/desktop/release/*.exe
-            apps/desktop/release/*.dmg
+          name: desktop-app-macos
+          path: apps/desktop/release/*.dmg
