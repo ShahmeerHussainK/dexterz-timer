@@ -25,13 +25,12 @@ jobs:
       
       - name: Install dependencies
         run: |
-          cd apps/desktop
-          npm install --force
+          npm install
+        working-directory: apps/desktop
       
       - name: Build desktop app
-        run: |
-          cd apps/desktop
-          npm run package
+        run: npm run package
+        working-directory: apps/desktop
       
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
