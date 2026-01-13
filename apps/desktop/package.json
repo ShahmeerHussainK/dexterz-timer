@@ -1,6 +1,6 @@
 {
   "name": "@time-tracker/desktop",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "Time Tracker Desktop App",
   "author": "Dexterz Technologies",
   "main": "dist/main.js",

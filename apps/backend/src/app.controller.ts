@@ -5,9 +5,9 @@ export class AppController {
   @Get('version')
   getVersion() {
     return {
-      version: '1.0.2',
+      version: '1.0.4',
       downloadUrl: 'https://dexterzbackend.online/downloads/TimeTracker-Setup.exe',
-      releaseNotes: 'Production URLs updated + Bug fixes',
+      releaseNotes: 'Teams, Projects, and Tasks management with project tracking in timelines',
       mandatory: false,
     };
   }
