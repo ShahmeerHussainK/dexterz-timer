@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-mac:
-    runs-on: macos-13  # Intel Mac
+    runs-on: macos-15-large  # Intel Mac
     
     steps:
       - name: Checkout code
