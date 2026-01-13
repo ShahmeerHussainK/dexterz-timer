@@ -24,9 +24,11 @@ jobs:
         with:
           node-version: '20'
       
-      - name: Install dependencies
-        run: |
-          npm install
+      - name: Install root dependencies
+        run: npm install
+      
+      - name: Install desktop dependencies
+        run: npm install
         working-directory: apps/desktop
       
       - name: Build desktop app
