@@ -101,8 +101,8 @@ export class ActivityService {
     return updatedSession;
   }
 
-  async batchUpload(userId: string, samples: ActivityBatchItem[]) {
-    console.log(`📥 Received batch upload: ${samples.length} samples from user ${userId}`);
+  async batchUpload(userId: string, samples: ActivityBatchItem[], projectId?: string) {
+    console.log(`📥 Received batch upload: ${samples.length} samples from user ${userId}, project: ${projectId || 'None'}`);
     
     if (samples.length === 0) {
       return { inserted: 0 };
@@ -207,11 +207,11 @@ export class ActivityService {
 
       // Try queue, fallback to direct call if Redis fails
       try {
-        await this.rollupQueue.add('rollup-user', { userId, from, to });
-        console.log(`🔄 Queued rollup job for user ${userId}`);
+        await this.rollupQueue.add('rollup-user', { userId, from, to, projectId });
+        console.log(`🔄 Queued rollup job for user ${userId} with project ${projectId || 'None'}`);
       } catch (error) {
         console.log(`⚠️ Redis unavailable, running rollup directly`);
-        await this.rollupService.rollupUserActivity(userId, from, to);
+        await this.rollupService.rollupUserActivity(userId, from, to, projectId);
       }
     }
 

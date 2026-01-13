@@ -4,7 +4,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { api } from '@/lib/api'
 import Link from 'next/link'
-import { Users, BarChart3, Settings, LogOut, Clock, Timer } from 'lucide-react'
+import { Users, BarChart3, Settings, LogOut, Clock, Timer, FolderKanban, UsersRound } from 'lucide-react'
 import Loader from '@/components/Loader'
 
 export default function DashboardLayout({
@@ -169,6 +169,17 @@ export default function DashboardLayout({
                 My Timesheet
               </Link>
               <Link
+                href="/dashboard/my-projects"
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  pathname?.startsWith('/dashboard/my-projects')
+                    ? 'bg-primary text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <FolderKanban className="h-5 w-5" />
+                My Projects
+              </Link>
+              <Link
                 href="/dashboard/change-password"
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   isActive('/dashboard/change-password')
@@ -203,6 +214,28 @@ export default function DashboardLayout({
               >
                 <Clock className="h-5 w-5" />
                 Timesheets
+              </Link>
+              <Link
+                href="/dashboard/teams"
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  pathname?.startsWith('/dashboard/teams')
+                    ? 'bg-primary text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <UsersRound className="h-5 w-5" />
+                Teams
+              </Link>
+              <Link
+                href="/dashboard/projects"
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  pathname?.startsWith('/dashboard/projects')
+                    ? 'bg-primary text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <FolderKanban className="h-5 w-5" />
+                Projects
               </Link>
               <Link
                 href="/dashboard/users"

@@ -8,6 +8,9 @@ import { ActivityModule } from './activity/activity.module';
 import { ReportsModule } from './reports/reports.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { WorkerModule } from './worker/worker.module';
+import { TeamsModule } from './teams/teams.module';
+import { ProjectsModule } from './projects/projects.module';
+import { TasksModule } from './tasks/tasks.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -29,6 +32,9 @@ import { AppController } from './app.controller';
     ReportsModule,
     OrganizationsModule,
     WorkerModule,
+    TeamsModule,
+    ProjectsModule,
+    TasksModule,
   ],
   controllers: [AppController],
 })

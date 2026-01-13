@@ -9,6 +9,11 @@ interface TimeEntry {
   startedAt: string
   endedAt: string
   kind: 'ACTIVE' | 'IDLE' | 'BREAK'
+  project?: {
+    id: string
+    name: string
+    color: string
+  }
 }
 
 interface GroupedTimelineProps {
@@ -85,6 +90,7 @@ export function GroupedTimeline({ entries, viewType }: GroupedTimelineProps) {
               <th className="hidden sm:table-cell px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500">End</th>
               <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500">Duration</th>
               <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500">Status</th>
+              <th className="hidden md:table-cell px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500">Project</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -119,6 +125,16 @@ export function GroupedTimeline({ entries, viewType }: GroupedTimelineProps) {
                     >
                       {entry.kind}
                     </span>
+                  </td>
+                  <td className="hidden md:table-cell px-2 sm:px-4 py-3">
+                    {entry.project ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.project.color }}></div>
+                        <span className="text-xs text-gray-700">{entry.project.name}</span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400">No project</span>
+                    )}
                   </td>
                 </tr>
               )
@@ -200,6 +216,12 @@ export function GroupedTimeline({ entries, viewType }: GroupedTimelineProps) {
                         <div className="hidden sm:block">
                           {formatTime(entry.startedAt)} → {formatTime(entry.endedAt)}
                         </div>
+                        {entry.project && (
+                          <div className="flex items-center gap-1 mt-1">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.project.color }}></div>
+                            <span className="text-xs text-gray-500">{entry.project.name}</span>
+                          </div>
+                        )}
                       </td>
                       <td className="px-2 sm:px-4 py-2 text-xs font-medium text-gray-900">
                         {formatMinutes(minutes)}

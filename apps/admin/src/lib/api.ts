@@ -212,6 +212,108 @@ class ApiClient {
       body: JSON.stringify({ newPassword }),
     })
   }
+
+  // Teams
+  async getTeams() {
+    return this.request<any[]>('/teams')
+  }
+
+  async getTeam(id: string) {
+    return this.request<any>(`/teams/${id}`)
+  }
+
+  async createTeam(data: { name: string; leadId?: string }) {
+    return this.request<any>('/teams', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateTeam(id: string, data: { name?: string; leadId?: string }) {
+    return this.request<any>(`/teams/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteTeam(id: string) {
+    return this.request<void>(`/teams/${id}`, { method: 'DELETE' })
+  }
+
+  async addTeamMember(teamId: string, userId: string) {
+    return this.request<any>(`/teams/${teamId}/members`, {
+      method: 'POST',
+      body: JSON.stringify({ userId }),
+    })
+  }
+
+  async removeTeamMember(userId: string) {
+    return this.request<void>(`/teams/members/${userId}`, { method: 'DELETE' })
+  }
+
+  // Projects
+  async getProjects(status?: string) {
+    const query = status ? `?status=${status}` : ''
+    return this.request<any[]>(`/projects${query}`)
+  }
+
+  async getProject(id: string) {
+    return this.request<any>(`/projects/${id}`)
+  }
+
+  async createProject(data: { name: string; description?: string; color?: string; teamId?: string }) {
+    return this.request<any>('/projects', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateProject(id: string, data: any) {
+    return this.request<any>(`/projects/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteProject(id: string) {
+    return this.request<void>(`/projects/${id}`, { method: 'DELETE' })
+  }
+
+  // Tasks
+  async getTasks(projectId?: string) {
+    const query = projectId ? `?projectId=${projectId}` : ''
+    return this.request<any[]>(`/tasks${query}`)
+  }
+
+  async getMyTasks() {
+    return this.request<any[]>('/tasks/my-tasks')
+  }
+
+  async getProjectTasks(projectId: string) {
+    return this.request<any[]>(`/tasks/project/${projectId}`)
+  }
+
+  async getTask(id: string) {
+    return this.request<any>(`/tasks/${id}`)
+  }
+
+  async createTask(data: { title: string; description?: string; projectId: string; assignedTo?: string; priority?: string; dueDate?: Date }) {
+    return this.request<any>('/tasks', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateTask(id: string, data: any) {
+    return this.request<any>(`/tasks/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteTask(id: string) {
+    return this.request<void>(`/tasks/${id}`, { method: 'DELETE' })
+  }
 }
 
 export const api = new ApiClient()

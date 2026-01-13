@@ -20,13 +20,14 @@ export class RollupProcessor extends WorkerHost {
   }
 
   private async handleRollupUser(
-    job: Job<{ userId: string; from: Date; to: Date }>,
+    job: Job<{ userId: string; from: Date; to: Date; projectId?: string }>,
   ) {
-    const { userId, from, to } = job.data;
+    const { userId, from, to, projectId } = job.data;
     return this.rollupService.rollupUserActivity(
       userId,
       new Date(from),
       new Date(to),
+      projectId,
     );
   }
 

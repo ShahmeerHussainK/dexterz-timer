@@ -21,12 +21,25 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: JwtPayload) {
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
-      include: { organization: true },
+      include: { 
+        organization: true,
+        team: {
+          include: {
+            projects: {
+              where: { status: 'ACTIVE' },
+              select: { id: true, name: true, color: true }
+            }
+          }
+        }
+      },
     });
 
     if (!user || !user.isActive) {
       throw new UnauthorizedException();
     }
+
+    // Get projects from user's team (if user has a team)
+    const projects = user.team?.projects || [];
 
     return {
       id: user.id,
@@ -37,6 +50,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       customCheckinStart: user.customCheckinStart,
       customCheckinEnd: user.customCheckinEnd,
       organization: user.organization,
+      projects: projects,
     };
   }
 }

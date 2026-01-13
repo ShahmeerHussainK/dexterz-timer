@@ -30,9 +30,10 @@ export class ActivityController {
   }
 
   @Post('batch')
-  async batchUpload(@Request() req, @Body() body: { samples: ActivityBatchItem[] }) {
+  async batchUpload(@Request() req, @Body() body: { samples: ActivityBatchItem[]; projectId?: string }) {
     console.log(`\n\n========== BATCH UPLOAD DEBUG ==========`);
     console.log(`User: ${req.user.id}`);
+    console.log(`Project ID: ${body.projectId || 'None'}`);
     console.log(`Samples count: ${body.samples?.length || 0}`);
     
     if (body.samples && body.samples.length > 0) {
@@ -44,7 +45,7 @@ export class ActivityController {
     }
     console.log(`========================================\n\n`);
     
-    return this.activityService.batchUpload(req.user.id, body.samples);
+    return this.activityService.batchUpload(req.user.id, body.samples, body.projectId);
   }
 
   @Get('recent')
