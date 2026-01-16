@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://dexterzbackend.online/api'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
 class ApiClient {
   private token: string | null = null
@@ -314,6 +314,19 @@ class ApiClient {
   async deleteTask(id: string) {
     return this.request<void>(`/tasks/${id}`, { method: 'DELETE' })
   }
-}
 
+  // Screenshots
+  async getScreenshots(userId: string, date?: string) {
+    const query = date ? `?userId=${userId}&date=${date}` : `?userId=${userId}`
+    return this.request<any[]>(`/screenshots${query}`)
+  }
+
+  async deleteScreenshot(id: number) {
+    return this.request<void>(`/screenshots/${id}`, { method: 'DELETE' })
+  }
+
+  async getActiveUsers() {
+    return this.request<any[]>('/activity/active-users')
+  }
+}
 export const api = new ApiClient()

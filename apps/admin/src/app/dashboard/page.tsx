@@ -11,10 +11,23 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all')
+  const [activeUserIds, setActiveUserIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     loadReport()
+    loadActiveUsers()
+    const interval = setInterval(loadActiveUsers, 30000) // Refresh every 30s
+    return () => clearInterval(interval)
   }, [selectedDate])
+
+  const loadActiveUsers = async () => {
+    try {
+      const activeUsers = await api.getActiveUsers()
+      setActiveUserIds(new Set(activeUsers.map((u: any) => u.userId)))
+    } catch (error) {
+      console.error('Failed to load active users:', error)
+    }
+  }
 
   const loadReport = async () => {
     setLoading(true)
@@ -42,12 +55,13 @@ export default function DashboardPage() {
     0
   ) || 0
 
-  const activeUsers = report?.users?.filter((u: any) => u.totalMinutes > 0).length || 0
+  const activeUsers = activeUserIds.size
+  const usersWithActivity = report?.users?.filter((u: any) => u.totalMinutes > 0).length || 0
   const inactiveUsers = report?.users?.filter((u: any) => u.totalMinutes === 0).length || 0
 
   const filteredUsers = report?.users?.filter((user: any) => {
-    if (filter === 'active') return user.totalMinutes > 0
-    if (filter === 'inactive') return user.totalMinutes === 0
+    if (filter === 'active') return activeUserIds.has(user.userId)
+    if (filter === 'inactive') return !activeUserIds.has(user.userId)
     return true
   }) || []
 
@@ -156,7 +170,7 @@ export default function DashboardPage() {
                     : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
                 }`}
               >
-                Inactive ({inactiveUsers})
+                Inactive ({(report?.users?.length || 0) - activeUsers})
               </button>
             </div>
           </div>

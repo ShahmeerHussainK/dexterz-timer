@@ -260,4 +260,30 @@ export class ActivityService {
       return { success: true, message: 'Rollup completed directly' };
     }
   }
+
+  async getActiveUsers() {
+    const activeSessions = await this.prisma.deviceSession.findMany({
+      where: {
+        endedAt: null,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            fullName: true,
+          },
+        },
+      },
+    });
+
+    return activeSessions.map(session => ({
+      userId: session.userId,
+      email: session.user.email,
+      fullName: session.user.fullName,
+      startedAt: session.startedAt,
+      deviceId: session.deviceId,
+      platform: session.platform,
+    }));
+  }
 }

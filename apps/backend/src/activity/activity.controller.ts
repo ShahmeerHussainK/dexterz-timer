@@ -56,6 +56,11 @@ export class ActivityController {
     );
   }
 
+  @Get('active-users')
+  async getActiveUsers() {
+    return this.activityService.getActiveUsers();
+  }
+
   @Post('rollup')
   async triggerRollup(@Request() req) {
     console.log(`🎯 Rollup endpoint hit by user: ${req.user.id}`);
