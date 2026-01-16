@@ -105,7 +105,8 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          <form method="post" className="space-y-6" onSubmit={handleSubmit}>
+            <fieldset disabled={loading} className="contents">
             {error && (
               <div className="rounded-lg bg-red-50 border border-red-200 p-4">
                 <p className="text-sm text-red-800 font-medium">{error}</p>
@@ -166,6 +167,7 @@ export default function LoginPage() {
             <p className="text-center text-sm text-gray-500">
               Protected by enterprise-grade encryption.
             </p>
+            </fieldset>
           </form>
         </div>
       </div>
