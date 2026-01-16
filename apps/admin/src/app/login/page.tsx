@@ -15,6 +15,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    e.stopPropagation()
     setError('')
     setLoading(true)
 
@@ -26,6 +27,8 @@ export default function LoginPage() {
     } finally {
       setLoading(false)
     }
+    
+    return false
   }
 
   const features = [
@@ -102,7 +105,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-6" onSubmit={handleSubmit} method="POST" action="javascript:void(0);">
             {error && (
               <div className="rounded-lg bg-red-50 border border-red-200 p-4">
                 <p className="text-sm text-red-800 font-medium">{error}</p>
