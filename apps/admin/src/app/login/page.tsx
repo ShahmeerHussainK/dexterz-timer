@@ -106,7 +106,7 @@ export default function LoginPage() {
           </div>
 
           <form method="post" className="space-y-6" onSubmit={handleSubmit}>
-            <fieldset disabled={loading} className="contents">
+            <fieldset disabled={loading} className="space-y-6 border-0 p-0 m-0">
             {error && (
               <div className="rounded-lg bg-red-50 border border-red-200 p-4">
                 <p className="text-sm text-red-800 font-medium">{error}</p>
