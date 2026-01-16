@@ -8,6 +8,9 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Time Tracker Admin',
   description: 'Time tracking administration panel',
+  icons: {
+    icon: '/favicon.png',
+  },
 }
 
 export default function RootLayout({

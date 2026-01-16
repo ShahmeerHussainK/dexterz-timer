@@ -10,6 +10,7 @@ export default function DashboardPage() {
   const [report, setReport] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all')
 
   useEffect(() => {
     loadReport()
@@ -42,6 +43,13 @@ export default function DashboardPage() {
   ) || 0
 
   const activeUsers = report?.users?.filter((u: any) => u.totalMinutes > 0).length || 0
+  const inactiveUsers = report?.users?.filter((u: any) => u.totalMinutes === 0).length || 0
+
+  const filteredUsers = report?.users?.filter((user: any) => {
+    if (filter === 'active') return user.totalMinutes > 0
+    if (filter === 'inactive') return user.totalMinutes === 0
+    return true
+  }) || []
 
   return (
     <div className="space-y-6">
@@ -114,8 +122,44 @@ export default function DashboardPage() {
       {/* User List */}
       <div className="rounded-xl bg-white shadow-lg">
         <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4">
-          <h2 className="text-lg font-semibold text-gray-900">📈 Activity Breakdown</h2>
-          <p className="text-xs text-gray-500 mt-1">Detailed user activity for selected date</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">📈 Activity Breakdown</h2>
+              <p className="text-xs text-gray-500 mt-1">Detailed user activity for selected date</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setFilter('all')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  filter === 'all'
+                    ? 'bg-primary text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                }`}
+              >
+                All ({report?.users?.length || 0})
+              </button>
+              <button
+                onClick={() => setFilter('active')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  filter === 'active'
+                    ? 'bg-green-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                }`}
+              >
+                Active ({activeUsers})
+              </button>
+              <button
+                onClick={() => setFilter('inactive')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  filter === 'inactive'
+                    ? 'bg-gray-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                }`}
+              >
+                Inactive ({inactiveUsers})
+              </button>
+            </div>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -136,8 +180,8 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
-              {report?.users?.length > 0 ? (
-                report.users.map((user: any) => (
+              {filteredUsers.length > 0 ? (
+                filteredUsers.map((user: any) => (
                   <tr key={user.userId} className="hover:bg-gray-50 transition-colors">
                     <td className="whitespace-nowrap px-6 py-4">
                       <div className="flex items-center gap-3">
