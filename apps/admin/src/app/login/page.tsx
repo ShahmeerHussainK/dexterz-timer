@@ -16,15 +16,30 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     e.stopPropagation()
+    
+    // Prevent double submission
+    if (loading) {
+      e.preventDefault()
+      return false
+    }
+    
     setError('')
     setLoading(true)
 
     try {
+      // Clear any old token first
+      api.clearToken()
+      
+      // Login with fresh credentials
       await api.login(email, password)
+      
+      // Small delay to ensure token is set
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      // Navigate to dashboard
       router.push('/dashboard')
     } catch (err: any) {
       setError(err.message || 'Login failed')
-    } finally {
       setLoading(false)
     }
     
@@ -105,7 +120,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <form className="space-y-6" onSubmit={handleSubmit} method="POST" action="javascript:void(0);">
+          <form className="space-y-6" onSubmit={handleSubmit} method="POST" action="#" onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}>
             {error && (
               <div className="rounded-lg bg-red-50 border border-red-200 p-4">
                 <p className="text-sm text-red-800 font-medium">{error}</p>
