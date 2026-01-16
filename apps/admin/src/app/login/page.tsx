@@ -119,13 +119,12 @@ export default function LoginPage() {
                 </label>
                 <input
                   id="email"
-                  name="email"
                   type="email"
                   autoComplete="email"
                   required
+                  disabled={loading}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
                   placeholder="you@dexterztechnologies.com"
                   className="flex h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-base transition-all duration-200 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 disabled:cursor-not-allowed disabled:opacity-50"
                 />
@@ -137,13 +136,12 @@ export default function LoginPage() {
                 </label>
                 <input
                   id="password"
-                  name="password"
                   type="password"
                   autoComplete="current-password"
                   required
+                  disabled={loading}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
                   placeholder="••••••••"
                   className="flex h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-base transition-all duration-200 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 disabled:cursor-not-allowed disabled:opacity-50"
                 />
