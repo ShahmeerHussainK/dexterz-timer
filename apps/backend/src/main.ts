@@ -6,15 +6,17 @@ import { join } from 'path';
 import * as bodyParser from 'body-parser';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bodyParser: false, // Disable default body parser
+  });
 
-  // Increase body size limit for screenshot uploads (50MB)
+  // Increase body size limit for screenshot uploads (50MB) - MUST be before CORS
   app.use(bodyParser.json({ limit: '50mb' }));
   app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
   // Enable CORS
   app.enableCors({
-    origin:  ['http://localhost:3000'],
+    origin: ['http://localhost:3000', 'https://dexterztracker.online', 'http://dexterztracker.online'],
     credentials: true,
   });
 
