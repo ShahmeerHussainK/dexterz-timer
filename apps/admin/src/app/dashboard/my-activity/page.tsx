@@ -40,54 +40,93 @@ export default function MyActivityPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-          My Activity
-        </h1>
-        <p className="mt-1 text-sm text-gray-500">📊 Your activity for today</p>
-      </div>
+    <div className="min-h-screen" style={{ backgroundColor: '#F1F4F7', fontFamily: '"Darker Grotesque", sans-serif' }}>
+      <div className="p-6 space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-black text-gray-900" style={{ fontWeight: 900 }}>
+            My Activity
+          </h1>
+          <p className="mt-1 text-sm text-gray-500">Your activity for today</p>
+        </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="group rounded-xl bg-gradient-to-br from-green-50 via-green-100 to-green-50 p-6 shadow-lg transition-all hover:shadow-xl hover:scale-105">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold text-green-600">Active Time</p>
-              <p className="mt-2 text-4xl font-bold text-green-900">
-                {formatMinutes(stats?.activeMinutes || 0)}
-              </p>
-              <p className="mt-1 text-xs text-green-600">Productive work time</p>
+        {/* Stats Grid */}
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Active Time Card */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-semibold" style={{ color: '#45C8AF' }}>Active Time</p>
+                <div className="mt-2 flex items-baseline gap-1">
+                  <p className="text-4xl font-black text-gray-900" style={{ fontWeight: 900 }}>
+                    {formatMinutes(stats?.activeMinutes || 0).split(' ')[0]}
+                  </p>
+                  <p className="text-xl font-bold text-gray-900">hrs</p>
+                  <p className="text-4xl font-black text-gray-900 ml-2" style={{ fontWeight: 900 }}>
+                    {formatMinutes(stats?.activeMinutes || 0).split(' ')[2]}
+                  </p>
+                  <p className="text-xl font-bold text-gray-900">min</p>
+                </div>
+                <p className="mt-1 text-xs text-gray-400">Productive Work Time</p>
+              </div>
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: '#E6F9F5' }}
+              >
+                <Activity className="h-6 w-6" style={{ color: '#45C8AF' }} />
+              </div>
             </div>
-            <div className="rounded-full bg-green-500 p-4 shadow-lg group-hover:scale-110 transition-transform">
-              <Activity className="h-7 w-7 text-white" />
+          </div>
+
+          {/* Idle Time Card */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-semibold" style={{ color: '#FF0000' }}>Idle Time</p>
+                <div className="mt-2 flex items-baseline gap-1">
+                  <p className="text-4xl font-black text-gray-900" style={{ fontWeight: 900 }}>
+                    {formatMinutes(stats?.idleMinutes || 0).split(' ')[0]}
+                  </p>
+                  <p className="text-xl font-bold text-gray-900">hrs</p>
+                  <p className="text-4xl font-black text-gray-900 ml-2" style={{ fontWeight: 900 }}>
+                    {formatMinutes(stats?.idleMinutes || 0).split(' ')[2]}
+                  </p>
+                  <p className="text-xl font-bold text-gray-900">min</p>
+                </div>
+                <p className="mt-1 text-xs text-gray-400">Inactive Periods</p>
+              </div>
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: '#FFEBEB' }}
+              >
+                <Clock className="h-6 w-6" style={{ color: '#FF0000' }} />
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="group rounded-xl bg-gradient-to-br from-yellow-50 via-yellow-100 to-yellow-50 p-6 shadow-lg transition-all hover:shadow-xl hover:scale-105">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold text-yellow-600">Idle Time</p>
-              <p className="mt-2 text-4xl font-bold text-yellow-900">
-                {formatMinutes(stats?.idleMinutes || 0)}
-              </p>
-              <p className="mt-1 text-xs text-yellow-600">Inactive periods</p>
-            </div>
-            <div className="rounded-full bg-yellow-500 p-4 shadow-lg group-hover:scale-110 transition-transform">
-              <Coffee className="h-7 w-7 text-white" />
-            </div>
-          </div>
+        {/* Tips Section */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm">
+          <h2 className="text-lg font-bold text-gray-900 mb-4" style={{ fontWeight: 700 }}>Tips</h2>
+          <ul className="space-y-3">
+            <li className="flex items-start gap-2 text-sm text-gray-500">
+              <span className="mt-1.5 w-1 h-1 rounded-full bg-gray-300 shrink-0" />
+              Keep the desktop app running to track your activity
+            </li>
+            <li className="flex items-start gap-2 text-sm text-gray-500">
+              <span className="mt-1.5 w-1 h-1 rounded-full bg-gray-300 shrink-0" />
+              Active time is counted when you're using keyboard/mouse
+            </li>
+            <li className="flex items-start gap-2 text-sm text-gray-500">
+              <span className="mt-1.5 w-1 h-1 rounded-full bg-gray-300 shrink-0" />
+              Idle time starts after 5 minutes of inactivity
+            </li>
+            <li className="flex items-start gap-2 text-sm text-gray-500">
+              <span className="mt-1.5 w-1 h-1 rounded-full bg-gray-300 shrink-0" />
+              Break time (22:00-23:00) is not counted
+            </li>
+          </ul>
         </div>
-      </div>
-
-      <div className="rounded-xl bg-white shadow-lg p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">💡 Tips</h2>
-        <ul className="space-y-2 text-sm text-gray-600">
-          <li>• Keep the desktop app running to track your activity</li>
-          <li>• Active time is counted when you're using keyboard/mouse</li>
-          <li>• Idle time starts after 5 minutes of inactivity</li>
-          <li>• Break time (22:00-23:00) is not counted</li>
-        </ul>
       </div>
     </div>
   )

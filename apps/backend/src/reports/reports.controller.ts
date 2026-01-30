@@ -22,7 +22,7 @@ export class ReportsController {
   constructor(
     private reportsService: ReportsService,
     private exportService: ExportService,
-  ) {}
+  ) { }
 
   @Get('summary')
   async getSummary(
@@ -98,26 +98,25 @@ export class ReportsController {
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.MANAGER, UserRole.MEMBER)
   async getMyToday(@Request() req) {
     const today = new Date().toISOString().split('T')[0];
-    const from = new Date(today + 'T00:00:00.000Z');
-    const to = new Date(today + 'T23:59:59.999Z');
-    
-    const entries = await this.reportsService.getUserTimesheet(
+
+    // Use working day boundary instead of midnight
+    const timesheet = await this.reportsService.getUserTimesheetWithTimezone(
       req.user.id,
-      from,
-      to,
+      today,
+      today,
     );
-    
+
     let activeMinutes = 0;
     let idleMinutes = 0;
-    
-    for (const entry of entries.entries) {
+
+    for (const entry of timesheet.entries) {
       const minutes = Math.floor(
         (new Date(entry.endedAt).getTime() - new Date(entry.startedAt).getTime()) / 60000
       );
       if (entry.kind === 'ACTIVE') activeMinutes += minutes;
       else if (entry.kind === 'IDLE') idleMinutes += minutes;
     }
-    
+
     return { activeMinutes, idleMinutes };
   }
 

@@ -328,5 +328,40 @@ class ApiClient {
   async getActiveUsers() {
     return this.request<any[]>('/activity/active-users')
   }
+
+  // Manual Time
+  async createManualTimeRequest(data: { startTime: string; endTime: string; minutes: number; reason: string; type: string }) {
+    return this.request<any>('/manual-time/request', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async getMyManualTimeRequests() {
+    return this.request<any[]>('/manual-time/my-requests')
+  }
+
+  async getPendingManualTimeRequests() {
+    return this.request<any[]>('/manual-time/pending')
+  }
+
+  async reviewManualTimeRequest(id: string, status: string, reviewNote?: string) {
+    return this.request<any>(`/manual-time/review/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, reviewNote }),
+    })
+  }
+
+  async addManualTime(data: { userId: string; startTime: string; endTime: string; minutes: number; reason: string; type: string }) {
+    return this.request<any>('/manual-time/add', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async getUserManualTimeRequests(userId: string, status?: string) {
+    const query = status ? `?status=${status}` : ''
+    return this.request<any[]>(`/manual-time/user/${userId}${query}`)
+  }
 }
 export const api = new ApiClient()

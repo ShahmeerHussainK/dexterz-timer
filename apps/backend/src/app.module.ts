@@ -11,6 +11,8 @@ import { WorkerModule } from './worker/worker.module';
 import { TeamsModule } from './teams/teams.module';
 import { ProjectsModule } from './projects/projects.module';
 import { TasksModule } from './tasks/tasks.module';
+import { ScreenshotsModule } from './screenshots/screenshots.module';
+import { ManualTimeModule } from './manual-time/manual-time.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -35,6 +37,8 @@ import { AppController } from './app.controller';
     TeamsModule,
     ProjectsModule,
     TasksModule,
+    ScreenshotsModule,
+    ManualTimeModule,
   ],
   controllers: [AppController],
 })

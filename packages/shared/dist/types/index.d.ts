@@ -87,6 +87,7 @@ export interface ActivityBatchItem {
     capturedAt: string;
     mouseDelta: number;
     keyCount: number;
+    activeSeconds?: number;
     deviceSessionId?: string;
 }
 export interface ReportSummary {

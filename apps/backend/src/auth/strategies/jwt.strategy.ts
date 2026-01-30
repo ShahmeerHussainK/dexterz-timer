@@ -42,11 +42,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const projects = user.team?.projects || [];
 
     return {
+      userId: user.id,  // Changed from 'id' to 'userId'
       id: user.id,
       email: user.email,
       fullName: user.fullName,
       orgId: user.orgId,
       role: user.role,
+      screenshotEnabled: user.screenshotEnabled,
       customCheckinStart: user.customCheckinStart,
       customCheckinEnd: user.customCheckinEnd,
       organization: user.organization,

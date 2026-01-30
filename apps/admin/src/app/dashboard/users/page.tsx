@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react'
 import { api } from '@/lib/api'
 import { formatMinutes, formatDate, formatTime, toOrgTimezone } from '@/lib/utils'
 import { toast } from '@/lib/toast'
-import { Plus, Pencil, Trash2, Eye, X, Clock, Activity, TrendingUp, Calendar, BarChart3, Key } from 'lucide-react'
+import { Plus, Pencil, Trash2, Eye, X, Clock, Activity, TrendingUp, Calendar, BarChart3, Key, Camera } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { GroupedTimeline } from '@/components/GroupedTimeline'
+import ScreenshotTimeline from '@/components/screenshots/ScreenshotTimeline'
 
 export default function UsersPage() {
   const [users, setUsers] = useState<any[]>([])
@@ -23,6 +24,9 @@ export default function UsersPage() {
   const [activityRate, setActivityRate] = useState<number | null>(null)
   const [schedule, setSchedule] = useState<any>(null)
   const [viewType, setViewType] = useState<'daily' | 'weekly' | 'monthly'>('weekly')
+  const [activeTab, setActiveTab] = useState<'activity' | 'screenshots'>('activity')
+  const [screenshots, setScreenshots] = useState<any[]>([])
+  const [loadingScreenshots, setLoadingScreenshots] = useState(false)
   const [dateRange, setDateRange] = useState({
     from: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     to: new Date().toISOString().split('T')[0],
@@ -32,6 +36,7 @@ export default function UsersPage() {
     password: '',
     fullName: '',
     role: 'MEMBER',
+    screenshotEnabled: true,
     customCheckinStart: '',
     customCheckinEnd: '',
   })
@@ -46,10 +51,10 @@ export default function UsersPage() {
     try {
       const response = await fetch('http://localhost:3001/api/app/version')
       const data = await response.json()
-      
+
       // Store in localStorage to show once per version
       const lastNotifiedVersion = localStorage.getItem('lastNotifiedAppVersion')
-      
+
       if (data.version && lastNotifiedVersion !== data.version) {
         toast.info(`🎉 New Desktop App v${data.version} Available! Click "Download Desktop App" button in sidebar.`)
         localStorage.setItem('lastNotifiedAppVersion', data.version)
@@ -94,7 +99,7 @@ export default function UsersPage() {
       }
       setShowModal(false)
       setEditingUser(null)
-      setFormData({ email: '', password: '', fullName: '', role: 'MEMBER', customCheckinStart: '', customCheckinEnd: '' })
+      setFormData({ email: '', password: '', fullName: '', role: 'MEMBER', screenshotEnabled: true, customCheckinStart: '', customCheckinEnd: '' })
       loadUsers()
       toast.success(editingUser ? 'User updated successfully' : 'User created successfully')
     } catch (error) {
@@ -110,6 +115,7 @@ export default function UsersPage() {
       password: '',
       fullName: user.fullName || '',
       role: user.role,
+      screenshotEnabled: user.screenshotEnabled ?? true,
       customCheckinStart: user.customCheckinStart || '',
       customCheckinEnd: user.customCheckinEnd || '',
     })
@@ -130,7 +136,7 @@ export default function UsersPage() {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!resetPasswordUser || !newPassword) return
-    
+
     try {
       await api.resetUserPassword(resetPasswordUser.id, newPassword)
       setShowPasswordModal(false)
@@ -146,8 +152,10 @@ export default function UsersPage() {
   const handleViewDetails = async (user: any) => {
     setSelectedUser(user)
     setShowDetailModal(true)
+    setActiveTab('activity')
     setLoadingTimesheet(true)
     setActivityRate(null)
+    setScreenshots([])
     try {
       const [timesheetData, activityRateData] = await Promise.all([
         api.getUserTimesheet(user.id, dateRange.from, dateRange.to),
@@ -175,10 +183,10 @@ export default function UsersPage() {
         const day = String(date.getDate()).padStart(2, '0')
         return `${year}-${month}-${day}`
       }
-      
+
       const today = getLocalDate(now)
       let from, to
-      
+
       if (viewType === 'daily') {
         // Daily: today only
         from = to = today
@@ -195,11 +203,11 @@ export default function UsersPage() {
         from = getLocalDate(firstDay)
         to = today
       }
-      
+
       setDateRange({ from, to })
     }
   }, [viewType])
-  
+
   useEffect(() => {
     if (selectedUser && showDetailModal) {
       // Reload data when date range changes
@@ -216,6 +224,19 @@ export default function UsersPage() {
           setTimesheet(timesheetData)
           setActivityRate(activityRateData.activityRate)
           console.log('📊 State updated with activity rate (useEffect):', activityRateData.activityRate)
+
+          // Load screenshots if on screenshots tab
+          if (activeTab === 'screenshots') {
+            setLoadingScreenshots(true)
+            try {
+              const screenshotsData = await api.getScreenshots(selectedUser.id, dateRange.to)
+              setScreenshots(screenshotsData)
+            } catch (error) {
+              console.error('Failed to load screenshots:', error)
+            } finally {
+              setLoadingScreenshots(false)
+            }
+          }
         } catch (error) {
           console.error('Failed to load data:', error)
         } finally {
@@ -236,186 +257,149 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6 pb-8">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">Users</h1>
-          <p className="mt-1 text-sm text-gray-500">👥 Manage organization users</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Users</h1>
+          <p className="mt-1 text-sm text-gray-500">Manage organization users</p>
         </div>
         <button
           onClick={() => {
             setEditingUser(null)
-            setFormData({ email: '', password: '', fullName: '', role: 'MEMBER', customCheckinStart: '', customCheckinEnd: '' })
+            setFormData({ email: '', password: '', fullName: '', role: 'MEMBER', screenshotEnabled: true, customCheckinStart: '', customCheckinEnd: '' })
             setShowModal(true)
           }}
-          className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-primary to-primary/80 px-4 py-2 text-sm font-medium text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
+          className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-teal-500 to-teal-600 px-5 py-2.5 text-sm font-medium text-white shadow-lg hover:shadow-xl transition-all hover:from-teal-600 hover:to-teal-700"
         >
           <Plus className="h-4 w-4" />
           Add User
         </button>
       </div>
 
-      <div className="rounded-xl bg-white shadow-lg overflow-hidden">
-        <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 px-4 sm:px-6 py-4">
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900">👤 User Directory</h2>
-          <p className="text-xs text-gray-500 mt-1">{users.length} total users</p>
-        </div>
-        <div className="block sm:hidden">
-          {/* Mobile Card View */}
-          <div className="divide-y divide-gray-200">
-            {users.map((user) => (
-              <div key={user.id} className="p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-start gap-3">
-                  <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white text-sm font-semibold shadow-md">
-                    {user.fullName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-gray-900 truncate">{user.fullName || 'N/A'}</h3>
-                        <p className="text-xs text-gray-500 truncate mt-0.5">{user.email}</p>
-                      </div>
-                      <div className="flex gap-1 flex-shrink-0">
-                        <button
-                          onClick={() => handleViewDetails(user)}
-                          className="rounded-lg p-1.5 text-blue-600 hover:bg-blue-50 transition-colors"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleEdit(user)}
-                          className="rounded-lg p-1.5 text-gray-600 hover:bg-gray-100 transition-colors"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setResetPasswordUser(user)
-                            setShowPasswordModal(true)
-                          }}
-                          className="rounded-lg p-1.5 text-orange-600 hover:bg-orange-50 transition-colors"
-                        >
-                          <Key className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(user.id)}
-                          className="rounded-lg p-1.5 text-red-600 hover:bg-red-50 transition-colors"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 mt-2">
-                      <span className="inline-flex rounded-full bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700">
-                        {user.role}
-                      </span>
-                      <span
-                        className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                          user.isActive
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-gray-100 text-gray-600'
-                        }`}
-                      >
-                        {user.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+      {/* User Directory Card */}
+      <div className="rounded-2xl bg-white shadow-lg overflow-hidden border border-gray-100">
+        {/* Card Header */}
+        <div className="px-6 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100">
+              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-gray-900">User Directory</h2>
+              <p className="text-xs text-gray-500">{users.length} total users</p>
+            </div>
           </div>
         </div>
-        <div className="hidden sm:block overflow-x-auto">
-          {/* Desktop Table View */}
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  User
-                </th>
-                <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Role
-                </th>
-                <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Status
-                </th>
-                <th className="px-3 sm:px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
-              {users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-3 sm:px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white text-xs sm:text-sm font-semibold shadow-md">
-                        {user.fullName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">
-                          {user.fullName || 'N/A'}
-                        </div>
-                        <div className="text-xs text-gray-500 truncate">
-                          {user.email}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-3 sm:px-4 py-3">
-                    <span className="inline-flex rounded-full bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700">
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-3 sm:px-4 py-3">
-                    <span
-                      className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                        user.isActive
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-gray-100 text-gray-600'
+
+        {/* User List */}
+        <div className="divide-y divide-gray-100">
+          {users.map((user) => (
+            <div key={user.id} className="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors">
+              {/* User Info */}
+              <div className="flex items-center gap-4 min-w-0 flex-1">
+                {/* Avatar */}
+                <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center text-white font-semibold shadow-md">
+                  {user.fullName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
+                </div>
+
+                {/* Name */}
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {user.fullName || user.email?.split('@')[0] || 'N/A'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Role Badge */}
+              <div className="flex-shrink-0 mx-4">
+                <span className="inline-flex items-center rounded-full bg-teal-100 px-3 py-1 text-xs font-medium text-teal-700">
+                  {user.role === 'MEMBER' ? 'Member' : user.role === 'ADMIN' ? 'Admin' : user.role === 'MANAGER' ? 'Manager' : user.role}
+                </span>
+              </div>
+
+              {/* Status Badge */}
+              <div className="flex-shrink-0 mx-4">
+                <span
+                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${user.isActive
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-gray-100 text-gray-600'
+                    }`}
+                >
+                  {user.isActive ? 'Active' : 'Inactive'}
+                </span>
+              </div>
+
+              {/* Screenshot Toggle - Hidden on mobile */}
+              <div className="hidden lg:flex flex-shrink-0 mx-4 items-center gap-2">
+                <Camera className="h-4 w-4 text-gray-400" />
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const originalUsers = [...users];
+                    const newStatus = !user.screenshotEnabled;
+
+                    // Optimistic update
+                    setUsers(users.map(u =>
+                      u.id === user.id ? { ...u, screenshotEnabled: newStatus } : u
+                    ));
+
+                    try {
+                      await api.updateUser(user.id, { screenshotEnabled: newStatus });
+                      toast.success(`Screenshot ${newStatus ? 'enabled' : 'disabled'}`);
+                    } catch (error) {
+                      // Rollback on failure
+                      setUsers(originalUsers);
+                      toast.error('Failed to update screenshot setting');
+                    }
+                  }}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500/20 ${user.screenshotEnabled ? 'bg-teal-500' : 'bg-gray-300'
+                    }`}
+                >
+                  <span
+                    className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-all duration-200 ease-in-out shadow-sm ${user.screenshotEnabled ? 'translate-x-4' : 'translate-x-1'
                       }`}
-                    >
-                      {user.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-3 sm:px-4 py-3">
-                    <div className="flex items-center justify-end gap-1">
-                      <button
-                        onClick={() => handleViewDetails(user)}
-                        className="rounded-lg p-1.5 text-blue-600 hover:bg-blue-50 transition-colors"
-                        title="View"
-                      >
-                        <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEdit(user)}
-                        className="rounded-lg p-1.5 text-gray-600 hover:bg-gray-100 transition-colors"
-                        title="Edit"
-                      >
-                        <Pencil className="h-3 w-3 sm:h-4 sm:w-4" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setResetPasswordUser(user)
-                          setShowPasswordModal(true)
-                        }}
-                        className="rounded-lg p-1.5 text-orange-600 hover:bg-orange-50 transition-colors"
-                        title="Reset"
-                      >
-                        <Key className="h-3 w-3 sm:h-4 sm:w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(user.id)}
-                        className="rounded-lg p-1.5 text-red-600 hover:bg-red-50 transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  />
+                </button>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button
+                  onClick={() => handleViewDetails(user)}
+                  className="rounded-lg p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                  title="View Details"
+                >
+                  <Eye className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => handleEdit(user)}
+                  className="rounded-lg p-2 text-gray-400 hover:text-teal-600 hover:bg-teal-50 transition-colors"
+                  title="Edit"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => {
+                    setResetPasswordUser(user)
+                    setShowPasswordModal(true)
+                  }}
+                  className="rounded-lg p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 transition-colors"
+                  title="Reset Password"
+                >
+                  <Key className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => handleDelete(user.id)}
+                  className="rounded-lg p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                  title="Delete"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -581,11 +565,10 @@ export default function UsersPage() {
                   <p className="text-xs sm:text-sm text-gray-500 truncate">{selectedUser.email}</p>
                 </div>
                 <span
-                  className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                    selectedUser.isActive
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}
+                  className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${selectedUser.isActive
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                    }`}
                 >
                   {selectedUser.isActive ? 'Active' : 'Inactive'}
                 </span>
@@ -608,392 +591,389 @@ export default function UsersPage() {
             {/* Content */}
             <div className="h-[calc(95vh-70px)] sm:h-[calc(90vh-80px)] overflow-y-auto p-3 sm:p-6">
               <div className="space-y-6">
-              {/* View Type Tabs */}
-              <div className="mb-4 flex gap-1 sm:gap-2 bg-white rounded-lg p-1 sm:p-2 shadow-md w-full sm:w-fit overflow-x-auto">
-                <button
-                  onClick={() => setViewType('daily')}
-                  className={`flex-1 sm:flex-none px-3 sm:px-6 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base font-semibold transition-all whitespace-nowrap ${
-                    viewType === 'daily'
+                {/* View Type Tabs */}
+                <div className="mb-4 flex gap-1 sm:gap-2 bg-white rounded-lg p-1 sm:p-2 shadow-md w-full sm:w-fit overflow-x-auto">
+                  <button
+                    onClick={() => setViewType('daily')}
+                    className={`flex-1 sm:flex-none px-3 sm:px-6 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base font-semibold transition-all whitespace-nowrap ${viewType === 'daily'
                       ? 'bg-primary text-white shadow-md'
                       : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  📅 Daily
-                </button>
-                <button
-                  onClick={() => setViewType('weekly')}
-                  className={`flex-1 sm:flex-none px-3 sm:px-6 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base font-semibold transition-all whitespace-nowrap ${
-                    viewType === 'weekly'
+                      }`}
+                  >
+                    📅 Daily
+                  </button>
+                  <button
+                    onClick={() => setViewType('weekly')}
+                    className={`flex-1 sm:flex-none px-3 sm:px-6 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base font-semibold transition-all whitespace-nowrap ${viewType === 'weekly'
                       ? 'bg-primary text-white shadow-md'
                       : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  📆 Weekly
-                </button>
-                <button
-                  onClick={() => setViewType('monthly')}
-                  className={`flex-1 sm:flex-none px-3 sm:px-6 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base font-semibold transition-all whitespace-nowrap ${
-                    viewType === 'monthly'
+                      }`}
+                  >
+                    📆 Weekly
+                  </button>
+                  <button
+                    onClick={() => setViewType('monthly')}
+                    className={`flex-1 sm:flex-none px-3 sm:px-6 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base font-semibold transition-all whitespace-nowrap ${viewType === 'monthly'
                       ? 'bg-primary text-white shadow-md'
                       : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  🗓️ Monthly
-                </button>
-              </div>
+                      }`}
+                  >
+                    🗓️ Monthly
+                  </button>
+                </div>
 
-              {/* Date Range */}
-              <div className="mb-6 rounded-lg bg-gray-50 p-4">
-                <div className="flex items-center gap-4">
-                  <Calendar className="h-5 w-5 text-gray-400" />
-                  {viewType === 'daily' ? (
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700">Select Date</label>
-                      <input
-                        type="date"
-                        value={dateRange.from}
-                        onChange={(e) => setDateRange({ from: e.target.value, to: e.target.value })}
-                        className="mt-1 block rounded-md border border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-primary"
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-4">
+                {/* Date Range */}
+                <div className="mb-6 rounded-lg bg-gray-50 p-4">
+                  <div className="flex items-center gap-4">
+                    <Calendar className="h-5 w-5 text-gray-400" />
+                    {viewType === 'daily' ? (
                       <div>
-                        <label className="block text-xs font-medium text-gray-700">From</label>
+                        <label className="block text-xs font-medium text-gray-700">Select Date</label>
                         <input
                           type="date"
                           value={dateRange.from}
-                          onChange={(e) => setDateRange({ ...dateRange, from: e.target.value })}
+                          onChange={(e) => setDateRange({ from: e.target.value, to: e.target.value })}
                           className="mt-1 block rounded-md border border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-primary"
                         />
                       </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700">To</label>
-                        <input
-                          type="date"
-                          value={dateRange.to}
-                          onChange={(e) => setDateRange({ ...dateRange, to: e.target.value })}
-                          className="mt-1 block rounded-md border border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-primary"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {loadingTimesheet ? (
-                <div className="flex h-64 items-center justify-center">
-                  <div className="text-gray-600">Loading...</div>
-                </div>
-              ) : (
-                <>
-                  {/* Check-in Status */}
-                  {(() => {
-                    const firstEntry = timesheet?.entries?.[0]
-                    if (!firstEntry || !schedule) return null
-                    
-                    // Convert to org timezone
-                    const start = toOrgTimezone(firstEntry.startedAt)
-                    const hour = start.getHours()
-                    const minute = start.getMinutes()
-                    const timeInMinutes = hour * 60 + minute
-                    
-                    // Use user custom times if available, otherwise org defaults
-                    const userCheckinStart = selectedUser.customCheckinStart || schedule.checkinStart
-                    const userCheckinEnd = selectedUser.customCheckinEnd || schedule.checkinEnd
-                    
-                    const [startHour, startMin] = userCheckinStart.split(':').map(Number)
-                    const [endHour, endMin] = userCheckinEnd.split(':').map(Number)
-                    const checkinStart = startHour * 60 + startMin
-                    const checkinEnd = endHour * 60 + endMin
-                    const onTimeEnd = checkinStart + 15
-                    
-                    let status, color, bgColor
-                    
-                    // Check if time is in valid window (handles overnight shift)
-                    const isInWindow = timeInMinutes >= checkinStart || timeInMinutes <= checkinEnd
-                    
-                    if (!isInWindow) {
-                      status = 'Early'
-                      color = 'text-blue-700'
-                      bgColor = 'bg-blue-50 border-blue-200'
-                    } else if (timeInMinutes >= checkinStart && timeInMinutes <= onTimeEnd) {
-                      status = 'On Time'
-                      color = 'text-green-700'
-                      bgColor = 'bg-green-50 border-green-200'
-                    } else {
-                      status = 'Late'
-                      color = 'text-red-700'
-                      bgColor = 'bg-red-50 border-red-200'
-                    }
-                    
-                    return (
-                      <div className={`mb-4 inline-flex items-center gap-2 rounded-lg border ${bgColor} px-3 py-2`}>
-                        <span className="text-xs font-medium text-gray-600">Check-in:</span>
-                        <span className={`text-sm font-bold ${color}`}>{status}</span>
-                        <span className="text-xs text-gray-500">
-                          {formatTime(firstEntry.startedAt)}
-                        </span>
-                      </div>
-                    )
-                  })()}
-
-                  {/* Stats */}
-                  <div className="mb-6 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-                    <div className="rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 p-4">
-                      <div className="flex items-center justify-between">
+                    ) : (
+                      <div className="flex items-center gap-4">
                         <div>
-                          <p className="text-xs font-medium text-blue-600">Total Time</p>
-                          <p className="mt-1 text-xl font-bold text-blue-900">
-                            {formatMinutes(
-                              timesheet?.entries?.reduce((sum: number, entry: any) => {
-                                const start = new Date(entry.startedAt)
-                                const end = new Date(entry.endedAt)
-                                return sum + Math.floor((end.getTime() - start.getTime()) / 60000)
-                              }, 0) || 0
-                            )}
-                          </p>
+                          <label className="block text-xs font-medium text-gray-700">From</label>
+                          <input
+                            type="date"
+                            value={dateRange.from}
+                            onChange={(e) => setDateRange({ ...dateRange, from: e.target.value })}
+                            className="mt-1 block rounded-md border border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-primary"
+                          />
                         </div>
-                        <Clock className="h-8 w-8 text-blue-600 opacity-50" />
-                      </div>
-                    </div>
-
-                    <div className="rounded-lg bg-gradient-to-br from-green-50 to-green-100 p-4">
-                      <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-xs font-medium text-green-600">Active Time</p>
-                          <p className="mt-1 text-xl font-bold text-green-900">
-                            {formatMinutes(
-                              timesheet?.entries
-                                ?.filter((e: any) => e.kind === 'ACTIVE')
-                                .reduce((sum: number, entry: any) => {
-                                  const start = new Date(entry.startedAt)
-                                  const end = new Date(entry.endedAt)
-                                  return sum + Math.floor((end.getTime() - start.getTime()) / 60000)
-                                }, 0) || 0
-                            )}
-                          </p>
+                          <label className="block text-xs font-medium text-gray-700">To</label>
+                          <input
+                            type="date"
+                            value={dateRange.to}
+                            onChange={(e) => setDateRange({ ...dateRange, to: e.target.value })}
+                            className="mt-1 block rounded-md border border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-primary"
+                          />
                         </div>
-                        <Activity className="h-8 w-8 text-green-600 opacity-50" />
                       </div>
-                    </div>
-
-                    <div className="rounded-lg bg-gradient-to-br from-yellow-50 to-yellow-100 p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs font-medium text-yellow-600">Idle Time</p>
-                          <p className="mt-1 text-xl font-bold text-yellow-900">
-                            {formatMinutes(
-                              timesheet?.entries
-                                ?.filter((e: any) => e.kind === 'IDLE')
-                                .reduce((sum: number, entry: any) => {
-                                  const start = new Date(entry.startedAt)
-                                  const end = new Date(entry.endedAt)
-                                  return sum + Math.floor((end.getTime() - start.getTime()) / 60000)
-                                }, 0) || 0
-                            )}
-                          </p>
-                        </div>
-                        <Clock className="h-8 w-8 text-yellow-600 opacity-50" />
-                      </div>
-                    </div>
-
-                    <div className="rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs font-medium text-purple-600">Activity Rate</p>
-                          <p className="mt-1 text-xl font-bold text-purple-900">
-                            {activityRate !== null ? `${activityRate}%` : 'N/A'}
-                          </p>
-                        </div>
-                        <TrendingUp className="h-8 w-8 text-purple-600 opacity-50" />
-                      </div>
-                    </div>
+                    )}
                   </div>
+                </div>
 
-                  {/* Activity Chart */}
-                  <div className="mb-6 rounded-xl border border-gray-200 bg-white shadow-sm">
-                    <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <BarChart3 className="h-5 w-5 text-primary" />
-                        <h3 className="font-semibold text-gray-900">Activity Overview</h3>
-                      </div>
-                    </div>
-                    <div className="p-6">
-                      <div className="grid gap-8 grid-cols-1 lg:grid-cols-2">
-                        {/* Bar Chart - Daily Activity */}
-                        <div className="rounded-lg bg-gradient-to-br from-gray-50 to-white p-4">
-                          <h4 className="mb-4 text-sm font-semibold text-gray-700">Daily Activity Breakdown</h4>
-                          <ResponsiveContainer width="100%" height={280}>
-                            <BarChart
-                              data={(() => {
-                                const dailyData: any = {}
-                                timesheet?.entries?.forEach((entry: any) => {
-                                  const date = new Date(entry.startedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                                  if (!dailyData[date]) {
-                                    dailyData[date] = { date, active: 0, idle: 0 }
-                                  }
+                {loadingTimesheet ? (
+                  <div className="flex h-64 items-center justify-center">
+                    <div className="text-gray-600">Loading...</div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Check-in Status */}
+                    {(() => {
+                      const firstEntry = timesheet?.entries?.[0]
+                      if (!firstEntry || !schedule) return null
+
+                      // Convert to org timezone
+                      const start = toOrgTimezone(firstEntry.startedAt)
+                      const hour = start.getHours()
+                      const minute = start.getMinutes()
+                      const timeInMinutes = hour * 60 + minute
+
+                      // Use user custom times if available, otherwise org defaults
+                      const userCheckinStart = selectedUser.customCheckinStart || schedule.checkinStart
+                      const userCheckinEnd = selectedUser.customCheckinEnd || schedule.checkinEnd
+
+                      const [startHour, startMin] = userCheckinStart.split(':').map(Number)
+                      const [endHour, endMin] = userCheckinEnd.split(':').map(Number)
+                      const checkinStart = startHour * 60 + startMin
+                      const checkinEnd = endHour * 60 + endMin
+                      const onTimeEnd = checkinStart + 15
+
+                      let status, color, bgColor
+
+                      // Check if time is in valid window (handles overnight shift)
+                      const isInWindow = timeInMinutes >= checkinStart || timeInMinutes <= checkinEnd
+
+                      if (!isInWindow) {
+                        status = 'Early'
+                        color = 'text-blue-700'
+                        bgColor = 'bg-blue-50 border-blue-200'
+                      } else if (timeInMinutes >= checkinStart && timeInMinutes <= onTimeEnd) {
+                        status = 'On Time'
+                        color = 'text-green-700'
+                        bgColor = 'bg-green-50 border-green-200'
+                      } else {
+                        status = 'Late'
+                        color = 'text-red-700'
+                        bgColor = 'bg-red-50 border-red-200'
+                      }
+
+                      return (
+                        <div className={`mb-4 inline-flex items-center gap-2 rounded-lg border ${bgColor} px-3 py-2`}>
+                          <span className="text-xs font-medium text-gray-600">Check-in:</span>
+                          <span className={`text-sm font-bold ${color}`}>{status}</span>
+                          <span className="text-xs text-gray-500">
+                            {formatTime(firstEntry.startedAt)}
+                          </span>
+                        </div>
+                      )
+                    })()}
+
+                    {/* Stats */}
+                    <div className="mb-6 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                      <div className="rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-medium text-blue-600">Total Time</p>
+                            <p className="mt-1 text-xl font-bold text-blue-900">
+                              {formatMinutes(
+                                timesheet?.entries?.reduce((sum: number, entry: any) => {
                                   const start = new Date(entry.startedAt)
                                   const end = new Date(entry.endedAt)
-                                  const minutes = Math.floor((end.getTime() - start.getTime()) / 60000)
-                                  if (entry.kind === 'ACTIVE') {
-                                    dailyData[date].active += minutes
-                                  } else {
-                                    dailyData[date].idle += minutes
-                                  }
-                                })
-                                return Object.values(dailyData)
-                              })()}
-                              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-                            >
-                              <defs>
-                                <linearGradient id="activeGradient" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.8} />
-                                  <stop offset="100%" stopColor="#10b981" stopOpacity={0.3} />
-                                </linearGradient>
-                                <linearGradient id="idleGradient" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.8} />
-                                  <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.3} />
-                                </linearGradient>
-                              </defs>
-                              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                              <XAxis 
-                                dataKey="date" 
-                                tick={{ fontSize: 11, fill: '#6b7280' }} 
-                                axisLine={{ stroke: '#e5e7eb' }}
-                                tickLine={false}
-                              />
-                              <YAxis 
-                                tick={{ fontSize: 11, fill: '#6b7280' }} 
-                                axisLine={{ stroke: '#e5e7eb' }}
-                                tickLine={false}
-                                label={{ value: 'Minutes', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: '#6b7280' } }}
-                              />
-                              <Tooltip 
-                                contentStyle={{ 
-                                  backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                                  border: '1px solid #e5e7eb',
-                                  borderRadius: '8px',
-                                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                                }}
-                                labelStyle={{ fontWeight: 600, color: '#111827' }}
-                              />
-                              <Legend 
-                                wrapperStyle={{ paddingTop: '10px' }}
-                                iconType="circle"
-                              />
-                              <Bar 
-                                dataKey="active" 
-                                fill="url(#activeGradient)" 
-                                name="Active" 
-                                radius={[6, 6, 0, 0]}
-                                animationDuration={800}
-                              />
-                              <Bar 
-                                dataKey="idle" 
-                                fill="url(#idleGradient)" 
-                                name="Idle" 
-                                radius={[6, 6, 0, 0]}
-                                animationDuration={800}
-                              />
-                            </BarChart>
-                          </ResponsiveContainer>
+                                  return sum + Math.floor((end.getTime() - start.getTime()) / 60000)
+                                }, 0) || 0
+                              )}
+                            </p>
+                          </div>
+                          <Clock className="h-8 w-8 text-blue-600 opacity-50" />
                         </div>
+                      </div>
 
-                        {/* Pie Chart - Active vs Idle */}
-                        <div className="rounded-lg bg-gradient-to-br from-gray-50 to-white p-4">
-                          <h4 className="mb-4 text-sm font-semibold text-gray-700">Time Distribution</h4>
-                          <ResponsiveContainer width="100%" height={280}>
-                            <PieChart>
-                              <defs>
-                                <linearGradient id="pieActiveGradient" x1="0" y1="0" x2="1" y2="1">
-                                  <stop offset="0%" stopColor="#10b981" />
-                                  <stop offset="100%" stopColor="#059669" />
-                                </linearGradient>
-                                <linearGradient id="pieIdleGradient" x1="0" y1="0" x2="1" y2="1">
-                                  <stop offset="0%" stopColor="#f59e0b" />
-                                  <stop offset="100%" stopColor="#d97706" />
-                                </linearGradient>
-                              </defs>
-                              <Pie
-                                data={[
-                                  {
-                                    name: 'Active',
-                                    value: timesheet?.entries
-                                      ?.filter((e: any) => e.kind === 'ACTIVE')
-                                      .reduce((sum: number, entry: any) => {
-                                        const start = new Date(entry.startedAt)
-                                        const end = new Date(entry.endedAt)
-                                        return sum + Math.floor((end.getTime() - start.getTime()) / 60000)
-                                      }, 0) || 0,
-                                  },
-                                  {
-                                    name: 'Idle',
-                                    value: timesheet?.entries
-                                      ?.filter((e: any) => e.kind === 'IDLE')
-                                      .reduce((sum: number, entry: any) => {
-                                        const start = new Date(entry.startedAt)
-                                        const end = new Date(entry.endedAt)
-                                        return sum + Math.floor((end.getTime() - start.getTime()) / 60000)
-                                      }, 0) || 0,
-                                  },
-                                ]}
-                                cx="50%"
-                                cy="50%"
-                                labelLine={false}
-                                label={({ name, percent, value }) => 
-                                  value > 0 ? `${name}: ${(percent * 100).toFixed(1)}%` : ''
-                                }
-                                outerRadius={90}
-                                innerRadius={50}
-                                fill="#8884d8"
-                                dataKey="value"
-                                animationBegin={0}
-                                animationDuration={800}
-                                paddingAngle={2}
+                      <div className="rounded-lg bg-gradient-to-br from-green-50 to-green-100 p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-medium text-green-600">Active Time</p>
+                            <p className="mt-1 text-xl font-bold text-green-900">
+                              {formatMinutes(
+                                timesheet?.entries
+                                  ?.filter((e: any) => e.kind === 'ACTIVE')
+                                  .reduce((sum: number, entry: any) => {
+                                    const start = new Date(entry.startedAt)
+                                    const end = new Date(entry.endedAt)
+                                    return sum + Math.floor((end.getTime() - start.getTime()) / 60000)
+                                  }, 0) || 0
+                              )}
+                            </p>
+                          </div>
+                          <Activity className="h-8 w-8 text-green-600 opacity-50" />
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg bg-gradient-to-br from-yellow-50 to-yellow-100 p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-medium text-yellow-600">Idle Time</p>
+                            <p className="mt-1 text-xl font-bold text-yellow-900">
+                              {formatMinutes(
+                                timesheet?.entries
+                                  ?.filter((e: any) => e.kind === 'IDLE')
+                                  .reduce((sum: number, entry: any) => {
+                                    const start = new Date(entry.startedAt)
+                                    const end = new Date(entry.endedAt)
+                                    return sum + Math.floor((end.getTime() - start.getTime()) / 60000)
+                                  }, 0) || 0
+                              )}
+                            </p>
+                          </div>
+                          <Clock className="h-8 w-8 text-yellow-600 opacity-50" />
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-medium text-purple-600">Activity Rate</p>
+                            <p className="mt-1 text-xl font-bold text-purple-900">
+                              {activityRate !== null ? `${activityRate}%` : 'N/A'}
+                            </p>
+                          </div>
+                          <TrendingUp className="h-8 w-8 text-purple-600 opacity-50" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Activity Chart */}
+                    <div className="mb-6 rounded-xl border border-gray-200 bg-white shadow-sm">
+                      <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <BarChart3 className="h-5 w-5 text-primary" />
+                          <h3 className="font-semibold text-gray-900">Activity Overview</h3>
+                        </div>
+                      </div>
+                      <div className="p-6">
+                        <div className="grid gap-8 grid-cols-1 lg:grid-cols-2">
+                          {/* Bar Chart - Daily Activity */}
+                          <div className="rounded-lg bg-gradient-to-br from-gray-50 to-white p-4">
+                            <h4 className="mb-4 text-sm font-semibold text-gray-700">Daily Activity Breakdown</h4>
+                            <ResponsiveContainer width="100%" height={280}>
+                              <BarChart
+                                data={(() => {
+                                  const dailyData: any = {}
+                                  timesheet?.entries?.forEach((entry: any) => {
+                                    const date = new Date(entry.startedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                                    if (!dailyData[date]) {
+                                      dailyData[date] = { date, active: 0, idle: 0 }
+                                    }
+                                    const start = new Date(entry.startedAt)
+                                    const end = new Date(entry.endedAt)
+                                    const minutes = Math.floor((end.getTime() - start.getTime()) / 60000)
+                                    if (entry.kind === 'ACTIVE') {
+                                      dailyData[date].active += minutes
+                                    } else {
+                                      dailyData[date].idle += minutes
+                                    }
+                                  })
+                                  return Object.values(dailyData)
+                                })()}
+                                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
                               >
-                                <Cell fill="url(#pieActiveGradient)" stroke="#fff" strokeWidth={2} />
-                                <Cell fill="url(#pieIdleGradient)" stroke="#fff" strokeWidth={2} />
-                              </Pie>
-                              <Tooltip 
-                                contentStyle={{ 
-                                  backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                                  border: '1px solid #e5e7eb',
-                                  borderRadius: '8px',
-                                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                                }}
-                                formatter={(value: number) => `${value} min`}
-                              />
-                            </PieChart>
-                          </ResponsiveContainer>
-                          <div className="mt-4 flex justify-center gap-6">
-                            <div className="flex items-center gap-2">
-                              <div className="h-3 w-3 rounded-full bg-gradient-to-br from-green-500 to-green-600"></div>
-                              <span className="text-xs font-medium text-gray-600">Active Time</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="h-3 w-3 rounded-full bg-gradient-to-br from-yellow-500 to-yellow-600"></div>
-                              <span className="text-xs font-medium text-gray-600">Idle Time</span>
+                                <defs>
+                                  <linearGradient id="activeGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#10b981" stopOpacity={0.8} />
+                                    <stop offset="100%" stopColor="#10b981" stopOpacity={0.3} />
+                                  </linearGradient>
+                                  <linearGradient id="idleGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.8} />
+                                    <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.3} />
+                                  </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                                <XAxis
+                                  dataKey="date"
+                                  tick={{ fontSize: 11, fill: '#6b7280' }}
+                                  axisLine={{ stroke: '#e5e7eb' }}
+                                  tickLine={false}
+                                />
+                                <YAxis
+                                  tick={{ fontSize: 11, fill: '#6b7280' }}
+                                  axisLine={{ stroke: '#e5e7eb' }}
+                                  tickLine={false}
+                                  label={{ value: 'Minutes', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: '#6b7280' } }}
+                                />
+                                <Tooltip
+                                  contentStyle={{
+                                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                                  }}
+                                  labelStyle={{ fontWeight: 600, color: '#111827' }}
+                                />
+                                <Legend
+                                  wrapperStyle={{ paddingTop: '10px' }}
+                                  iconType="circle"
+                                />
+                                <Bar
+                                  dataKey="active"
+                                  fill="url(#activeGradient)"
+                                  name="Active"
+                                  radius={[6, 6, 0, 0]}
+                                  animationDuration={800}
+                                />
+                                <Bar
+                                  dataKey="idle"
+                                  fill="url(#idleGradient)"
+                                  name="Idle"
+                                  radius={[6, 6, 0, 0]}
+                                  animationDuration={800}
+                                />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+
+                          {/* Pie Chart - Active vs Idle */}
+                          <div className="rounded-lg bg-gradient-to-br from-gray-50 to-white p-4">
+                            <h4 className="mb-4 text-sm font-semibold text-gray-700">Time Distribution</h4>
+                            <ResponsiveContainer width="100%" height={280}>
+                              <PieChart>
+                                <defs>
+                                  <linearGradient id="pieActiveGradient" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0%" stopColor="#10b981" />
+                                    <stop offset="100%" stopColor="#059669" />
+                                  </linearGradient>
+                                  <linearGradient id="pieIdleGradient" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0%" stopColor="#f59e0b" />
+                                    <stop offset="100%" stopColor="#d97706" />
+                                  </linearGradient>
+                                </defs>
+                                <Pie
+                                  data={[
+                                    {
+                                      name: 'Active',
+                                      value: timesheet?.entries
+                                        ?.filter((e: any) => e.kind === 'ACTIVE')
+                                        .reduce((sum: number, entry: any) => {
+                                          const start = new Date(entry.startedAt)
+                                          const end = new Date(entry.endedAt)
+                                          return sum + Math.floor((end.getTime() - start.getTime()) / 60000)
+                                        }, 0) || 0,
+                                    },
+                                    {
+                                      name: 'Idle',
+                                      value: timesheet?.entries
+                                        ?.filter((e: any) => e.kind === 'IDLE')
+                                        .reduce((sum: number, entry: any) => {
+                                          const start = new Date(entry.startedAt)
+                                          const end = new Date(entry.endedAt)
+                                          return sum + Math.floor((end.getTime() - start.getTime()) / 60000)
+                                        }, 0) || 0,
+                                    },
+                                  ]}
+                                  cx="50%"
+                                  cy="50%"
+                                  labelLine={false}
+                                  label={({ name, percent, value }) =>
+                                    value > 0 ? `${name}: ${(percent * 100).toFixed(1)}%` : ''
+                                  }
+                                  outerRadius={90}
+                                  innerRadius={50}
+                                  fill="#8884d8"
+                                  dataKey="value"
+                                  animationBegin={0}
+                                  animationDuration={800}
+                                  paddingAngle={2}
+                                >
+                                  <Cell fill="url(#pieActiveGradient)" stroke="#fff" strokeWidth={2} />
+                                  <Cell fill="url(#pieIdleGradient)" stroke="#fff" strokeWidth={2} />
+                                </Pie>
+                                <Tooltip
+                                  contentStyle={{
+                                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                                  }}
+                                  formatter={(value: number) => `${value} min`}
+                                />
+                              </PieChart>
+                            </ResponsiveContainer>
+                            <div className="mt-4 flex justify-center gap-6">
+                              <div className="flex items-center gap-2">
+                                <div className="h-3 w-3 rounded-full bg-gradient-to-br from-green-500 to-green-600"></div>
+                                <span className="text-xs font-medium text-gray-600">Active Time</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="h-3 w-3 rounded-full bg-gradient-to-br from-yellow-500 to-yellow-600"></div>
+                                <span className="text-xs font-medium text-gray-600">Idle Time</span>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Timeline */}
-                  <div className="rounded-lg border border-gray-200">
-                    <div className="border-b border-gray-200 bg-gray-50 px-4 py-3">
-                      <h3 className="font-semibold text-gray-900">Activity Timeline</h3>
-                      <p className="text-xs text-gray-500">
-                        {timesheet?.entries?.length || 0} entries
-                        {viewType !== 'daily' && ' (grouped by day)'}
-                      </p>
+                    {/* Timeline */}
+                    <div className="rounded-lg border border-gray-200">
+                      <div className="border-b border-gray-200 bg-gray-50 px-4 py-3">
+                        <h3 className="font-semibold text-gray-900">Activity Timeline</h3>
+                        <p className="text-xs text-gray-500">
+                          {timesheet?.entries?.length || 0} entries
+                          {viewType !== 'daily' && ' (grouped by day)'}
+                        </p>
+                      </div>
+                      <GroupedTimeline entries={timesheet?.entries || []} viewType={viewType} />
                     </div>
-                    <GroupedTimeline entries={timesheet?.entries || []} viewType={viewType} />
-                  </div>
-                </>
-              )}
+                  </>
+                )}
               </div>
             </div>
           </div>

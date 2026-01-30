@@ -23,10 +23,10 @@ export default function MyProjectsPage() {
         api.getCurrentUser()
       ])
       setTasks(myTasks)
-      
+
       // Show projects from user's team OR projects where user has tasks
       const taskProjectIds = [...new Set(myTasks.map((t: any) => t.projectId))]
-      const myProjects = allProjects.filter((p: any) => 
+      const myProjects = allProjects.filter((p: any) =>
         (currentUser.teamId && p.teamId === currentUser.teamId) || taskProjectIds.includes(p.id)
       )
       setProjects(myProjects)

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Desktop App Not Available</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 100px auto;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 { color: #e74c3c; }
+        .instructions {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: left;
+            margin-top: 20px;
+        }
+        code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>⚠️ Desktop App Not Built Yet</h1>
+    <p>The desktop application installer is not available yet.</p>
+    
+    <div class="instructions">
+        <h3>📦 To Build Desktop App:</h3>
+        <ol>
+            <li>Open terminal in project root</li>
+            <li>Run: <code>cd apps/desktop</code></li>
+            <li>Run: <code>npm run package</code></li>
+            <li>Copy installer: <code>copy "release\Time Tracker Setup 1.0.0.exe" "..\..\backend\public\downloads\TimeTracker-Setup.exe"</code></li>
+            <li>Refresh this page to download</li>
+        </ol>
+    </div>
+</body>
+</html>

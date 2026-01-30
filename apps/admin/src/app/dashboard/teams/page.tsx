@@ -77,13 +77,13 @@ export default function TeamsPage() {
   const getAvailableUsers = () => {
     const currentTeam = teams.find(t => t.id === selectedTeamId)
     if (!currentTeam) return []
-    
+
     const teamMemberIds = currentTeam.members?.map((m: any) => m.id) || []
     const teamLeadId = currentTeam.leadId
-    
-    return users.filter(u => 
-      !u.teamId && 
-      !teamMemberIds.includes(u.id) && 
+
+    return users.filter(u =>
+      !u.teamId &&
+      !teamMemberIds.includes(u.id) &&
       u.id !== teamLeadId
     )
   }
@@ -113,7 +113,7 @@ export default function TeamsPage() {
   }
 
   const toggleUserSelection = (userId: string) => {
-    setSelectedUserIds(prev => 
+    setSelectedUserIds(prev =>
       prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
     )
   }
@@ -123,69 +123,102 @@ export default function TeamsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Teams</h1>
-          <p className="text-sm text-gray-500">Manage teams and team leads</p>
-        </div>
-        <button onClick={() => { setShowModal(true); setEditingTeam(null); setFormData({ name: '', leadId: '' }) }} className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary/90">
-          <Plus className="h-4 w-4" /> New Team
-        </button>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {teams.map((team) => (
-          <div key={team.id} className="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-lg transition-all duration-200">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 p-3">
-                  <Users className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 text-lg">{team.name}</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">{team.members?.length || 0} members • {team._count?.projects || 0} projects</p>
-                </div>
-              </div>
-              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={() => { setEditingTeam(team); setFormData({ name: team.name, leadId: team.leadId || '' }); setShowModal(true) }} className="rounded-lg p-2 hover:bg-gray-100 transition-colors">
-                  <Edit className="h-4 w-4 text-gray-600" />
-                </button>
-                <button onClick={() => handleDelete(team.id)} className="rounded-lg p-2 hover:bg-red-50 transition-colors">
-                  <Trash2 className="h-4 w-4 text-red-600" />
-                </button>
-              </div>
-            </div>
-            {team.lead && (
-              <div className="mb-3 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 p-3 border border-blue-100">
-                <p className="text-xs font-medium text-blue-600 mb-1">Team Lead</p>
-                <p className="text-sm font-semibold text-gray-900">{team.lead.fullName || team.lead.email}</p>
-              </div>
-            )}
-            {team.members && team.members.length > 0 && (
-              <div className="mb-3">
-                <button onClick={() => handleViewMembers(team)} className="w-full text-left rounded-lg bg-gradient-to-r from-purple-50 to-pink-50 p-3 border border-purple-100 hover:shadow-md transition-all">
-                  <p className="text-xs font-medium text-purple-600 mb-2">Team Members ({team.members.length})</p>
-                  <div className="flex -space-x-2">
-                    {team.members.slice(0, 5).map((member: any, idx: number) => (
-                      <div key={idx} className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white text-xs font-bold border-2 border-white shadow-sm">
-                        {(member.fullName || member.email).charAt(0).toUpperCase()}
-                      </div>
-                    ))}
-                    {team.members.length > 5 && (
-                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-bold border-2 border-white shadow-sm">
-                        +{team.members.length - 5}
-                      </div>
-                    )}
-                  </div>
-                </button>
-              </div>
-            )}
-            <button onClick={() => handleAddMember(team.id)} className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 py-2.5 text-sm font-medium text-gray-600 hover:border-primary hover:bg-primary/5 hover:text-primary transition-all">
-              <UserPlus className="h-4 w-4" /> Add Member
-            </button>
+    <div className="min-h-screen" style={{ backgroundColor: '#F1F4F7', fontFamily: '"Darker Grotesque", sans-serif' }}>
+      <div className="p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Teams</h1>
+            <p className="text-sm text-gray-500">Manage teams and team leads</p>
           </div>
-        ))}
+          <button
+            onClick={() => { setShowModal(true); setEditingTeam(null); setFormData({ name: '', leadId: '' }) }}
+            className="flex items-center gap-2 rounded-lg px-4 py-2 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+            style={{ backgroundColor: '#1ABC9C' }}
+          >
+            <Plus className="h-4 w-4" />
+            New Team
+          </button>
+        </div>
+
+        {/* Teams Grid */}
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {teams.map((team) => (
+            <div
+              key={team.id}
+              className="bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-all border border-gray-100"
+            >
+              {/* Team Header */}
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: '#1ABC9C' }}
+                  >
+                    <Users className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-lg">{team.name}</h3>
+                    <p className="text-xs text-gray-500">{team.members?.length || 0} members • {team._count?.projects || 0} projects</p>
+                  </div>
+                </div>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => { setEditingTeam(team); setFormData({ name: team.name, leadId: team.leadId || '' }); setShowModal(true) }}
+                    className="rounded-lg p-1.5 hover:bg-gray-100 transition-colors"
+                  >
+                    <Edit className="h-4 w-4 text-gray-400" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(team.id)}
+                    className="rounded-lg p-1.5 hover:bg-red-50 transition-colors"
+                  >
+                    <Trash2 className="h-4 w-4 text-red-400" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Team Lead Section */}
+              <div className="mb-3">
+                <p className="text-xs font-semibold mb-2" style={{ color: '#1ABC9C' }}>Team Lead</p>
+                {team.lead ? (
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold"
+                      style={{ backgroundColor: '#FB923C' }}
+                    >
+                      {(team.lead.fullName || team.lead.email).charAt(0).toUpperCase()}
+                    </div>
+                    <span className="text-sm font-semibold text-gray-900">{team.lead.fullName || team.lead.email}</span>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-400 italic">No lead assigned</p>
+                )}
+              </div>
+
+              {/* Team Members Section */}
+              <div className="mb-4">
+                <button
+                  onClick={() => handleViewMembers(team)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold"
+                  style={{ backgroundColor: '#FEF3C7', color: '#92400E' }}
+                >
+                  Team Members ({team.members?.length || 0})
+                </button>
+              </div>
+
+              {/* Add Member Button */}
+              <button
+                onClick={() => handleAddMember(team.id)}
+                className="flex items-center gap-2 text-sm font-semibold transition-colors"
+                style={{ color: '#1ABC9C' }}
+              >
+                <UserPlus className="h-4 w-4" />
+                Add Member
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
       {showModal && (
@@ -225,17 +258,15 @@ export default function TeamsPage() {
                   <button
                     key={user.id}
                     onClick={() => toggleUserSelection(user.id)}
-                    className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${
-                      selectedUserIds.includes(user.id)
+                    className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${selectedUserIds.includes(user.id)
                         ? 'border-primary bg-primary/5 shadow-md'
                         : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                    }`}
+                      }`}
                   >
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm ${
-                      selectedUserIds.includes(user.id)
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm ${selectedUserIds.includes(user.id)
                         ? 'bg-gradient-to-br from-primary to-primary/80'
                         : 'bg-gradient-to-br from-gray-400 to-gray-500'
-                    }`}>
+                      }`}>
                       {(user.fullName || user.email).charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 text-left">

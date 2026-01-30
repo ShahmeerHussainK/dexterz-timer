@@ -18,7 +18,7 @@ import { UserRole } from '@time-tracker/shared';
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
-  constructor(private usersService: UsersService) {}
+  constructor(private usersService: UsersService) { }
 
   @Get()
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.MANAGER)
@@ -41,6 +41,7 @@ export class UsersController {
       password: string;
       fullName: string;
       role: UserRole;
+      screenshotEnabled?: boolean;
     },
   ) {
     return this.usersService.create({
@@ -53,12 +54,13 @@ export class UsersController {
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   async update(
     @Param('id') id: string,
-    @Body() body: { 
-      fullName?: string; 
-      role?: UserRole; 
+    @Body() body: {
+      fullName?: string;
+      role?: UserRole;
       isActive?: boolean;
       customCheckinStart?: string;
       customCheckinEnd?: string;
+      screenshotEnabled?: boolean;
     },
   ) {
     return this.usersService.update(id, body);

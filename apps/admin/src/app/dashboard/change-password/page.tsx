@@ -39,65 +39,80 @@ export default function ChangePasswordPage() {
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-          Change Password
-        </h1>
-        <p className="mt-1 text-sm text-gray-500">🔒 Update your account password</p>
-      </div>
+    <div className="min-h-screen" style={{ backgroundColor: '#F1F4F7', fontFamily: '"Darker Grotesque", sans-serif' }}>
+      <div className="p-6 space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-black text-gray-900" style={{ fontWeight: 900 }}>
+            Settings
+          </h1>
+          <p className="mt-1 text-sm text-gray-500">Update your Account password</p>
+        </div>
 
-      <div className="rounded-xl bg-white shadow-lg p-6">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Current Password
-            </label>
-            <input
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              required
-              className="w-full rounded-lg border-2 border-gray-300 px-4 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
-          </div>
+        {/* Password Change Card */}
+        <div className="bg-white rounded-2xl shadow-sm p-8 max-w-xl">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-sm font-semibold text-gray-600 mb-2">
+                Current Password
+              </label>
+              <input
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                required
+                placeholder="Current Password"
+                className="w-full h-12 px-4 bg-white border-2 border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:border-[#45C8AF] focus:ring-2 focus:ring-[#45C8AF]/20 outline-none transition-all"
+                style={{ fontFamily: '"Darker Grotesque", sans-serif' }}
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              New Password
-            </label>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-              minLength={6}
-              className="w-full rounded-lg border-2 border-gray-300 px-4 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-600 mb-2">
+                New Password
+              </label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                minLength={6}
+                placeholder="New Password"
+                className="w-full h-12 px-4 bg-white border-2 border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:border-[#45C8AF] focus:ring-2 focus:ring-[#45C8AF]/20 outline-none transition-all"
+                style={{ fontFamily: '"Darker Grotesque", sans-serif' }}
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Confirm New Password
-            </label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              minLength={6}
-              className="w-full rounded-lg border-2 border-gray-300 px-4 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-600 mb-2">
+                Confirm New Password
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={6}
+                placeholder="Confirm New Password"
+                className="w-full h-12 px-4 bg-white border-2 border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:border-[#45C8AF] focus:ring-2 focus:ring-[#45C8AF]/20 outline-none transition-all"
+                style={{ fontFamily: '"Darker Grotesque", sans-serif' }}
+              />
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-primary px-4 py-2 font-semibold text-white shadow-lg transition-all hover:bg-primary/90 disabled:opacity-50"
-          >
-            {loading ? 'Changing...' : 'Change Password'}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full h-12 rounded-xl font-bold text-white transition-all disabled:opacity-50"
+              style={{
+                backgroundColor: '#45C8AF',
+                fontFamily: '"Darker Grotesque", sans-serif',
+                fontWeight: 700
+              }}
+            >
+              {loading ? 'Changing...' : 'Change Password'}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   )

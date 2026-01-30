@@ -3,13 +3,18 @@ import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import * as bodyParser from 'body-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
+  // Increase body size limit for screenshot uploads (10MB)
+  app.use(bodyParser.json({ limit: '10mb' }));
+  app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
+
   // Enable CORS
   app.enableCors({
-    origin:  ['https://dexterztracker.online'],
+    origin:  ['http://localhost:3000'],
     credentials: true,
   });
 
@@ -23,6 +28,12 @@ async function bootstrap() {
   
   app.useStaticAssets(downloadsPath, {
     prefix: '/downloads',
+  });
+
+  // Serve screenshots from public/screenshots directory
+  const screenshotsPath = join(__dirname, '..', 'public', 'screenshots');
+  app.useStaticAssets(screenshotsPath, {
+    prefix: '/screenshots',
   });
 
   // Global validation pipe
@@ -39,6 +50,7 @@ async function bootstrap() {
 
   console.log(`🚀 Backend API running on http://localhost:${port}/api`);
   console.log(`📦 Downloads available at http://localhost:${port}/downloads/`);
+  console.log(`📸 Screenshots available at http://localhost:${port}/screenshots/`);
 }
 
 bootstrap();

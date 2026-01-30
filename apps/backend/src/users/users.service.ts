@@ -16,6 +16,7 @@ export class UsersService {
         fullName: true,
         role: true,
         isActive: true,
+        screenshotEnabled: true,
         customCheckinStart: true,
         customCheckinEnd: true,
         createdAt: true,
@@ -78,6 +79,7 @@ export class UsersService {
       fullName?: string;
       role?: UserRole;
       isActive?: boolean;
+      screenshotEnabled?: boolean;
       customCheckinStart?: string;
       customCheckinEnd?: string;
     },
@@ -91,6 +93,7 @@ export class UsersService {
         fullName: true,
         role: true,
         isActive: true,
+        screenshotEnabled: true,
         customCheckinStart: true,
         customCheckinEnd: true,
         createdAt: true,
