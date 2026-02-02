@@ -135,7 +135,7 @@ export default function DashboardLayout({
             {/* Right - Actions */}
             <div className="flex items-center gap-4">
               <a
-                href="https://dexterzbackend.online/downloads/TimeTracker-Setup.exe"
+                href="https://dexterzbackend.online/downloads/Time Tracker Setup 1.0.6.exe"
                 download
                 className="relative hidden md:flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all border"
                 style={{
